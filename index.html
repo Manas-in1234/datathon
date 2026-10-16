@@ -3,382 +3,432 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CityFix AI — Municipal Command Center</title>
-  <link rel="stylesheet" href="styles.css">
-  <!-- Leaflet CSS for Map Visualization -->
+  <title>CityFix AI — City Intelligence Dashboard</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
   <!-- Top Navigation Bar -->
-  <header class="top-navbar">
-    <div class="brand">
-      <div class="brand-icon">⚡</div>
+  <header class="top-nav">
+    <div class="nav-brand">
+      <div class="brand-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+      </div>
       <div>
         <div class="brand-title">CityFix AI</div>
-        <div class="brand-subtitle">Municipal Civic-Intelligence Command Center • Datathon 2026 Track 3</div>
+        <div class="brand-subtitle">Civic Intelligence Platform</div>
       </div>
     </div>
-    <div class="header-badges">
-      <span class="badge badge-synthetic">
-        ⚠️ Synthetic Educational Dataset
-      </span>
-      <span class="badge badge-live">
-        <span class="live-dot"></span> 1,000 Locations Monitored
+
+    <nav class="nav-links">
+      <a href="#section-dashboard" class="nav-link active">Dashboard</a>
+      <a href="#section-matrix" class="nav-link">Priority Matrix</a>
+      <a href="#section-evidence" class="nav-link">Evidence</a>
+      <a href="#section-map" class="nav-link">Map</a>
+      <a href="#section-analytics" class="nav-link">Analytics</a>
+      <a href="#section-ai" class="nav-link">AI Assistant</a>
+      <a href="#section-methodology" class="nav-link">Methodology</a>
+    </nav>
+
+    <div class="nav-actions">
+      <span class="badge-synthetic">
+        <span class="badge-dot"></span> Synthetic Educational Data
       </span>
     </div>
   </header>
 
-  <!-- App Container -->
-  <div class="app-container">
+  <!-- Main Container -->
+  <main class="app-layout" id="section-dashboard">
     
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <ul class="nav-menu">
-        <li class="nav-item active" data-tab="tab-dashboard">
-          <button type="button">📊 Executive Dashboard</button>
-        </li>
-        <li class="nav-item" data-tab="tab-rankings">
-          <button type="button">📋 Priority Rankings</button>
-        </li>
-        <li class="nav-item" data-tab="tab-map">
-          <button type="button">🗺️ City Infrastructure Map</button>
-        </li>
-        <li class="nav-item" data-tab="tab-evidence">
-          <button type="button">🔍 Evidence Deep-Dive</button>
-        </li>
-        <li class="nav-item" data-tab="tab-ai">
-          <button type="button">🤖 AI City Intelligence</button>
-        </li>
-        <li class="nav-item" data-tab="tab-methodology">
-          <button type="button">📖 Scoring & Data Quality</button>
-        </li>
-      </ul>
-
-      <div class="sidebar-footer">
-        <div><strong>CityFix AI Engine v2.0</strong></div>
-        <div style="margin-top: 4px;">Track 3: Smart City Prioritization</div>
-        <div style="margin-top: 4px; color: var(--teal-primary);">Deterministic &amp; Transparent</div>
+    <!-- Page Header -->
+    <section class="page-header">
+      <div>
+        <h1 class="page-title">City Intelligence Dashboard</h1>
+        <p class="page-subtitle">
+          Explainable civic infrastructure prioritization platform to triage repairs across 1,000 locations using incident history, citizen complaints, and spatial vulnerability indicators.
+        </p>
       </div>
-    </aside>
+      <div class="header-status">
+        <span class="status-pill">1,000 Locations Monitored</span>
+        <span class="status-pill">20 Municipal Zones</span>
+      </div>
+    </section>
 
-    <!-- Main Content Area -->
-    <main class="main-content">
+    <!-- 4 Compact KPI Cards -->
+    <section class="kpi-grid">
+      <!-- Total Locations -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Total Locations</span>
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpi-locations">1,000</div>
+        <div class="kpi-subtext">Across 20 municipal zones</div>
+      </div>
+
+      <!-- Total Incidents -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Total Incidents</span>
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 2 22 22 22 12 2"></polygon>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpi-incidents">10,000</div>
+        <div class="kpi-subtext">Recorded in 2025 (28.7% backlog)</div>
+      </div>
+
+      <!-- Public Complaints -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Public Complaints</span>
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpi-complaints">8,000</div>
+        <div class="kpi-subtext">Citizen 311 service tickets</div>
+      </div>
+
+      <!-- Critical-Priority Locations -->
+      <div class="kpi-card kpi-card-critical">
+        <div class="kpi-header">
+          <span class="kpi-label">Critical-Priority Locations</span>
+          <div class="kpi-icon kpi-icon-critical">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value kpi-value-critical" id="kpi-critical-hotspots">53</div>
+        <div class="kpi-subtext">Score &ge; 50.0 (Immediate Inspection)</div>
+      </div>
+    </section>
+
+    <!-- MAIN TWO-COLUMN SPLIT: Matrix + Evidence Panel -->
+    <section class="main-split-grid" id="section-matrix">
       
-      <!-- Global Synthetic Disclaimer Banner -->
-      <div class="disclaimer-banner">
-        <span>ℹ️</span>
-        <div>
-          <strong>Educational Datathon Dataset Notice:</strong>
-          All records, timestamps, and coordinates in this system are simulated for the Datathon 2026 challenge.
-          They are not official municipal records and should not be used for real public safety or engineering dispatch.
-        </div>
-      </div>
-
-      <!-- TAB 1: EXECUTIVE DASHBOARD -->
-      <section id="tab-dashboard" class="tab-panel active">
-        <!-- KPI Cards -->
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-title"><span>Total Locations</span><span>📍</span></div>
-            <div class="kpi-value" id="kpi-locations">1,000</div>
-            <div class="kpi-subtext">Across 20 civic zones</div>
+      <!-- LEFT: Location Priority Matrix -->
+      <div class="panel-card matrix-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Location Priority Matrix</h2>
+            <p class="panel-subtitle">Ranked locations by multi-pillar civic risk. Click any row to inspect full evidence.</p>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-title"><span>Recorded Incidents</span><span>🚨</span></div>
-            <div class="kpi-value" id="kpi-incidents">10,000</div>
-            <div class="kpi-subtext">Verified 2025 disruptions</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-title"><span>Public Complaints</span><span>📣</span></div>
-            <div class="kpi-value" id="kpi-complaints">8,000</div>
-            <div class="kpi-subtext">Citizen 311 service tickets</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-title"><span>Unresolved Incidents</span><span>⏳</span></div>
-            <div class="kpi-value" id="kpi-unresolved" style="color: var(--crit-color);">2,874</div>
-            <div class="kpi-subtext">28.7% active hazard backlog</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-title"><span>Active Complaints</span><span>📋</span></div>
-            <div class="kpi-value" id="kpi-open-comp" style="color: var(--high-color);">3,438</div>
-            <div class="kpi-subtext">Open, in-progress, or assigned</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-title"><span>Critical Hotspots</span><span>🔥</span></div>
-            <div class="kpi-value" id="kpi-critical-hotspots" style="color: var(--crit-color);">53</div>
-            <div class="kpi-subtext">Priority Score ≥ 50.0 (Top 5.3%)</div>
-          </div>
+          <div class="panel-tag" id="filter-match-count">1,000 locations</div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="charts-grid">
-          <!-- Priority Tiers -->
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Priority Tier Distribution (1,000 Locations)</div>
-            </div>
-            <div class="dist-bar-group" id="chart-tiers"></div>
+        <!-- Filter Controls Bar -->
+        <div class="filter-bar">
+          <div class="filter-item filter-search">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="filter-search" class="form-input search-input" placeholder="Search location ID or zone...">
           </div>
 
-          <!-- Incident Severity -->
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Incident Severity Breakdown (10,000 Incidents)</div>
-            </div>
-            <div class="dist-bar-group" id="chart-severity"></div>
+          <div class="filter-item">
+            <select id="filter-zone" class="form-select">
+              <option value="">All Zones</option>
+            </select>
           </div>
 
-          <!-- Incident Categories -->
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Top Incident Categories (Physical Events)</div>
-            </div>
-            <div class="dist-bar-group" id="chart-inc-categories"></div>
+          <div class="filter-item">
+            <select id="filter-tier" class="form-select">
+              <option value="">All Priorities</option>
+              <option value="Critical">Critical (&ge; 50)</option>
+              <option value="High">High (40 - 50)</option>
+              <option value="Medium">Medium (30 - 40)</option>
+              <option value="Low">Low (&lt; 30)</option>
+            </select>
           </div>
 
-          <!-- Complaint Categories -->
-          <div class="chart-card">
-            <div class="chart-header">
-              <div class="chart-title">Public Complaint Categories (Citizen Demand)</div>
-            </div>
-            <div class="dist-bar-group" id="chart-comp-categories"></div>
+          <div class="filter-item">
+            <select id="filter-category" class="form-select">
+              <option value="">All Categories</option>
+              <option value="pothole">Potholes</option>
+              <option value="flooding">Flooding</option>
+              <option value="blocked_drain">Blocked Drains</option>
+              <option value="signal_failure">Signal Failures</option>
+              <option value="streetlight_outage">Streetlights</option>
+              <option value="collision">Collisions</option>
+            </select>
           </div>
-        </div>
 
-        <!-- Fix First Spotlight -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-title">⚡ High-Urgency Fix First Spotlight (Top 3 Locations)</div>
-            <button class="btn-inspect" onclick="switchTab('tab-rankings')">View All Rankings →</button>
-          </div>
-          <div id="spotlight-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;"></div>
-        </div>
-      </section>
-
-      <!-- TAB 2: PRIORITY RANKINGS TABLE -->
-      <section id="tab-rankings" class="tab-panel">
-        <div class="toolbar">
-          <div class="filter-group">
-            <div>
-              <div class="filter-label">Search Location</div>
-              <input type="text" id="filter-search" class="text-input" placeholder="e.g. L0965, ZONE_20..." style="width: 170px;">
-            </div>
-            <div>
-              <div class="filter-label">Priority Tier</div>
-              <select id="filter-tier" class="select-input">
-                <option value="">All Tiers</option>
-                <option value="Critical">Critical (≥ 50)</option>
-                <option value="High">High (40 - 50)</option>
-                <option value="Medium">Medium (30 - 40)</option>
-                <option value="Low">Low (&lt; 30)</option>
-              </select>
-            </div>
-            <div>
-              <div class="filter-label">Zone</div>
-              <select id="filter-zone" class="select-input">
-                <option value="">All 20 Zones</option>
-              </select>
-            </div>
-            <div>
-              <div class="filter-label">Category Filter</div>
-              <select id="filter-category" class="select-input">
-                <option value="">All Issue Types</option>
-                <option value="pothole">Potholes</option>
-                <option value="flooding">Flooding</option>
-                <option value="blocked_drain">Blocked Drains</option>
-                <option value="signal_failure">Signal Failures</option>
-                <option value="streetlight_outage">Streetlight Outages</option>
-                <option value="collision">Collisions</option>
-              </select>
-            </div>
-          </div>
-          <div class="filter-group">
-            <button class="btn-inspect" id="btn-reset-filters">Reset Filters</button>
-            <span id="filter-match-count" style="font-size: 13px; color: var(--text-muted);">Showing 1,000 locations</span>
+          <div class="filter-item">
+            <button type="button" id="btn-reset-filters" class="btn btn-secondary">Reset</button>
           </div>
         </div>
 
         <!-- Table Container -->
-        <div class="table-container">
-          <table class="data-table" id="priority-table">
+        <div class="table-wrapper">
+          <table class="matrix-table" id="priority-table">
             <thead>
               <tr>
-                <th>Rank</th>
-                <th>Location</th>
-                <th>Zone</th>
-                <th>Priority Score</th>
-                <th>Tier</th>
-                <th>Incidents (Crit/High)</th>
-                <th>Complaints</th>
-                <th>Backlog</th>
-                <th>Road Condition</th>
-                <th>Key Factor</th>
-                <th>Action</th>
+                <th style="width: 110px;">Location ID</th>
+                <th style="width: 100px;">Zone</th>
+                <th style="width: 120px;">Priority</th>
+                <th style="width: 100px;">Incidents</th>
+                <th style="width: 100px;">Complaints</th>
+                <th style="width: 110px;">Score</th>
               </tr>
             </thead>
             <tbody id="priority-table-body">
-              <!-- Populated dynamically -->
+              <!-- Dynamically populated -->
             </tbody>
           </table>
         </div>
 
         <!-- Pagination -->
-        <div class="pagination">
+        <div class="pagination-bar">
+          <div class="pagination-text">
+            Showing <strong id="page-start">1</strong> to <strong id="page-end">25</strong> of <strong id="page-total">1,000</strong>
+          </div>
+          <div class="pagination-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page">&larr; Previous</button>
+            <span class="page-badge" id="page-indicator">Page 1</span>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page">Next &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Selected Location Evidence Panel -->
+      <div class="panel-card evidence-panel" id="section-evidence">
+        <div class="panel-header">
           <div>
-            Showing <span id="page-start">1</span> to <span id="page-end">25</span> of <span id="page-total">1,000</span>
+            <h2 class="panel-title">Selected Location Evidence</h2>
+            <p class="panel-subtitle">Transparent justification and municipal triage recommendation.</p>
           </div>
-          <div class="pagination-controls">
-            <button class="btn-page" id="btn-prev-page">← Previous</button>
-            <span id="page-indicator" style="padding: 6px 12px; font-weight: 700;">Page 1</span>
-            <button class="btn-page" id="btn-next-page">Next →</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 3: INTERACTIVE CITY MAP -->
-      <section id="tab-map" class="tab-panel">
-        <div class="map-wrapper">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <h2 style="font-size: 16px; font-weight: 700; color: var(--text-bright);">Geographic Infrastructure Triage Map</h2>
-              <p style="font-size: 12px; color: var(--text-muted);">Simulated spatial distribution across Greater Metro (16.45° N, 80.50° E)</p>
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <span class="badge" style="background: var(--crit-bg); color: var(--crit-color); border: 1px solid var(--crit-border);">● Critical (≥ 50)</span>
-              <span class="badge" style="background: var(--high-bg); color: var(--high-color); border: 1px solid var(--high-border);">● High (40 - 50)</span>
-              <span class="badge" style="background: var(--med-bg); color: var(--med-color); border: 1px solid var(--med-border);">● Medium (30 - 40)</span>
-              <span class="badge" style="background: var(--low-bg); color: var(--low-color); border: 1px solid var(--low-border);">● Low (&lt; 30)</span>
-            </div>
-          </div>
-          <div id="city-map"></div>
-        </div>
-      </section>
-
-      <!-- TAB 4: EVIDENCE DEEP-DIVE PANEL -->
-      <section id="tab-evidence" class="tab-panel">
-        <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
-          <label style="font-size: 13px; font-weight: 700; color: var(--text-muted);">SELECT LOCATION TO INSPECT:</label>
-          <select id="evidence-location-select" class="select-input" style="font-weight: 700; min-width: 200px;">
+          <select id="evidence-location-select" class="form-select form-select-sm" style="max-width: 160px;">
             <!-- Populated dynamically -->
           </select>
         </div>
 
-        <div class="evidence-container" id="evidence-content">
-          <!-- Populated dynamically -->
+        <div class="evidence-body" id="evidence-content">
+          <!-- Dynamically populated by app.js -->
         </div>
-      </section>
+      </div>
 
-      <!-- TAB 5: AI CITY INTELLIGENCE PANEL -->
-      <section id="tab-ai" class="tab-panel">
-        <div class="ai-panel">
+    </section>
+
+    <!-- TWO-COLUMN SECTION: Analytics & Map -->
+    <section class="analytics-map-grid" id="section-analytics">
+      
+      <!-- Incident & Complaint Analytics -->
+      <div class="panel-card">
+        <div class="panel-header">
           <div>
-            <h2 style="font-size: 18px; font-weight: 800; color: var(--teal-accent);">🤖 AI City Intelligence &amp; Analytical Query Console</h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
-              Ask natural-language or thematic questions about civic infrastructure hotspots. 
-              All answers are computed deterministically from verified 2025 incidents, complaints, and spatial indicators.
+            <h2 class="panel-title">Incident Analytics &amp; Distributions</h2>
+            <p class="panel-subtitle">Citywide distributions across 10,000 incidents and 8,000 complaints.</p>
+          </div>
+        </div>
+
+        <div class="analytics-charts-grid">
+          <!-- Priority Tiers -->
+          <div class="sub-chart-box">
+            <h3 class="sub-chart-title">Priority Tier Distribution (1,000 Locations)</h3>
+            <div class="chart-bars" id="chart-tiers"></div>
+          </div>
+
+          <!-- Incident Severity -->
+          <div class="sub-chart-box">
+            <h3 class="sub-chart-title">Incident Severity Breakdown (10,000 Incidents)</h3>
+            <div class="chart-bars" id="chart-severity"></div>
+          </div>
+
+          <!-- Incident Categories -->
+          <div class="sub-chart-box">
+            <h3 class="sub-chart-title">Top Incident Types (Field Reports)</h3>
+            <div class="chart-bars" id="chart-inc-categories"></div>
+          </div>
+
+          <!-- Complaint Categories -->
+          <div class="sub-chart-box">
+            <h3 class="sub-chart-title">Public Complaint Categories (Citizen 311)</h3>
+            <div class="chart-bars" id="chart-comp-categories"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Map Card -->
+      <div class="panel-card" id="section-map">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Infrastructure Triage Map</h2>
+            <p class="panel-subtitle">Geographic risk distribution across Greater Metro (16.45&deg; N, 80.50&deg; E)</p>
+          </div>
+          <div class="map-legend">
+            <span class="legend-badge legend-critical">&bull; Critical (&ge; 50)</span>
+            <span class="legend-badge legend-high">&bull; High (40 - 50)</span>
+            <span class="legend-badge legend-medium">&bull; Medium (30 - 40)</span>
+            <span class="legend-badge legend-low">&bull; Low (&lt; 30)</span>
+          </div>
+        </div>
+
+        <div class="map-container-box">
+          <div id="city-map"></div>
+          <div class="map-disclaimer">
+            <span>&bull;</span> Coordinates and records are synthetic for educational datathon evaluation.
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- AI CITY INTELLIGENCE ASSISTANT -->
+    <section class="panel-card ai-assistant-panel" id="section-ai">
+      <div class="panel-header">
+        <div class="ai-header-content">
+          <div class="ai-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 16v-4"></path>
+              <path d="M12 8h.01"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="panel-title">AI City Intelligence Assistant</h2>
+            <p class="panel-subtitle">
+              Ask natural-language questions to analyze civic priority hotspots and infrastructure backlogs deterministically.
             </p>
           </div>
-
-          <!-- Preset prompt pills -->
-          <div class="ai-prompts">
-            <span class="prompt-pill" onclick="runAiQuery('Which locations have the highest priority?')">🚨 Top 5 High-Priority Hotspots</span>
-            <span class="prompt-pill" onclick="runAiQuery('Why is L0965 ranked highly?')">🔍 Why is L0965 Ranked #1?</span>
-            <span class="prompt-pill" onclick="runAiQuery('Which incident categories are most common?')">📊 City-Wide Issue Breakdown</span>
-            <span class="prompt-pill" onclick="runAiQuery('Which locations have the worst unresolved incident backlog?')">⏳ Worst Unresolved Backlogs</span>
-            <span class="prompt-pill" onclick="runAiQuery('Where are recurring drainage and flooding issues concentrated?')">🌧️ Severe Drainage &amp; Floods</span>
-            <span class="prompt-pill" onclick="runAiQuery('Which locations near schools or hospitals have poor roads?')">🏫 Vulnerable School &amp; Hospital Corridors</span>
-          </div>
-
-          <!-- Input query bar -->
-          <div class="ai-input-bar">
-            <input type="text" id="ai-query-input" placeholder="Ask a question or enter a location ID (e.g. 'Why is L0729 high?', 'Potholes in ZONE_14')...">
-            <button type="button" id="btn-run-ai">Investigate</button>
-          </div>
-
-          <!-- Result box -->
-          <div class="ai-result-box" id="ai-result-container">
-            <div class="ai-result-header" id="ai-result-title">
-              💡 Intelligence Result
-            </div>
-            <div id="ai-result-text" style="font-size: 14px; line-height: 1.6; color: var(--text-bright);">
-              Select one of the query pills above or type an investigation prompt to analyze civic priorities across the 1,000 city locations.
-            </div>
-            <div id="ai-result-extra"></div>
-            <div class="ai-matched-cards" id="ai-matched-container"></div>
-          </div>
         </div>
-      </section>
+      </div>
 
-      <!-- TAB 6: SCORING METHODOLOGY & DATA QUALITY -->
-      <section id="tab-methodology" class="tab-panel">
-        <div class="chart-card" style="margin-bottom: 20px;">
-          <h2 style="font-size: 18px; font-weight: 800; color: var(--teal-accent); margin-bottom: 12px;">Scoring Methodology &amp; Mathematical Formulation</h2>
-          <p style="font-size: 14px; color: var(--text-main); margin-bottom: 16px; line-height: 1.6;">
-            The CityFix AI Priority Engine synthesizes four normalized subscores ($S_i \in [0, 100]$) into a deterministic composite index:
+      <!-- Example Queries -->
+      <div class="ai-suggestions">
+        <span class="suggestion-label">Suggested Queries:</span>
+        <button type="button" class="query-chip" onclick="runAiQuery('Which locations have the highest priority?')">Top 5 Priority Hotspots</button>
+        <button type="button" class="query-chip" onclick="runAiQuery('Why is L0965 ranked highly?')">Why is L0965 Ranked #1?</button>
+        <button type="button" class="query-chip" onclick="runAiQuery('Which locations have recurring unresolved incidents?')">Worst Unresolved Backlogs</button>
+        <button type="button" class="query-chip" onclick="runAiQuery('Where are recurring drainage and flooding issues concentrated?')">Drainage &amp; Floods</button>
+        <button type="button" class="query-chip" onclick="runAiQuery('Which locations near schools or hospitals have poor roads?')">Vulnerable School/Hospital Corridors</button>
+      </div>
+
+      <!-- Query Input Bar -->
+      <div class="ai-input-wrapper">
+        <input type="text" id="ai-query-input" class="form-input ai-input" placeholder="Ask a question or enter a location ID (e.g., 'Why is L0965 high?', 'Flooding near schools')...">
+        <button type="button" id="btn-run-ai" class="btn btn-primary">Ask</button>
+      </div>
+
+      <!-- AI Results Display -->
+      <div class="ai-results-card" id="ai-result-container">
+        <div class="ai-result-header" id="ai-result-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Intelligence Analysis Result</span>
+        </div>
+        <div class="ai-result-text" id="ai-result-text">
+          Select one of the query suggestions above or type an investigation prompt to analyze civic priorities across the 1,000 city locations.
+        </div>
+        <div id="ai-result-extra"></div>
+        <div class="ai-matched-grid" id="ai-matched-container"></div>
+      </div>
+    </section>
+
+    <!-- METHODOLOGY & DATA CONSTRAINTS -->
+    <section class="panel-card methodology-panel" id="section-methodology">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Scoring Methodology &amp; Data Integrity Rules</h2>
+          <p class="panel-subtitle">Multi-pillar mathematical formulation and Stage 1 validation constraints.</p>
+        </div>
+      </div>
+
+      <div class="methodology-grid">
+        <div class="methodology-card">
+          <div class="pillar-weight-badge">Weight: 35%</div>
+          <h3 class="methodology-h3">1. Incident Hazard</h3>
+          <p class="methodology-desc">
+            <code>4&times;Critical + 3&times;High + 2&times;Medium + 1&times;Low + 2&times;Injuries + 1&times;Count</code>.
+            Evaluates verified physical disruptions, hazard severity, and acute injuries reported by field crews.
           </p>
-          <div style="background: var(--bg-secondary); border-left: 4px solid var(--teal-primary); padding: 14px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 14px; margin-bottom: 20px;">
-            Priority Score = (0.35 × S_incident) + (0.25 × S_backlog) + (0.25 × S_vulnerability) + (0.15 × S_complaint)
-          </div>
-
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px;">
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px;">
-              <h3 style="font-size: 14px; color: var(--teal-primary); margin-bottom: 8px;">1. Incident Hazard (Weight: 35%)</h3>
-              <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                Weighted severity sum: <code>4×Critical + 3×High + 2×Medium + 1×Low + 2×Injuries + 1×Count</code>.
-                Captures verified physical disruptions and acute safety hazards.
-              </p>
-            </div>
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px;">
-              <h3 style="font-size: 14px; color: var(--teal-primary); margin-bottom: 8px;">2. Backlog Burden (Weight: 25%)</h3>
-              <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                Pending risk load: <code>2.5×Unresolved Incidents + 1.0×Open Complaints</code>.
-                Prioritizes locations where hazards have lingered without closed resolution.
-              </p>
-            </div>
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px;">
-              <h3 style="font-size: 14px; color: var(--teal-primary); margin-bottom: 8px;">3. Vulnerability Context (Weight: 25%)</h3>
-              <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                Infrastructure &amp; receptors: Road Condition (up to 35 pts) + School Proximity (20 pts) + Hospital Proximity (20 pts) + Pedestrian Activity (15 pts) + Population Density (10 pts).
-              </p>
-            </div>
-            <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px;">
-              <h3 style="font-size: 14px; color: var(--teal-primary); margin-bottom: 8px;">4. Citizen Demand (Weight: 15%)</h3>
-              <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                Community feedback load: <code>1.0×Total Complaints + 2.0×High Priority + 0.5×Normal Priority</code>.
-                Distinguishes citizen reporting urgency from physical telemetry.
-              </p>
-            </div>
-          </div>
         </div>
 
-        <div class="chart-card">
-          <h2 style="font-size: 18px; font-weight: 800; color: var(--high-color); margin-bottom: 12px;">Stage 1 Data Quality &amp; Reliability Constraints</h2>
-          <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 13px; color: var(--text-main);">
-            <li style="padding-left: 20px; position: relative;">
-              <span style="position: absolute; left: 0; color: var(--high-color);">⚠️</span>
-              <strong>Unresolved Durations Excluded:</strong> Stage 1 audit identified that unresolved incidents (<code>resolved=0</code>) unconditionally contain duration values due to synthetic generator artifacts. These were strictly excluded from turnaround scoring to prevent target leakage.
-            </li>
-            <li style="padding-left: 20px; position: relative;">
-              <span style="position: absolute; left: 0; color: var(--high-color);">⚠️</span>
-              <strong>Complaints vs. Incidents Distinction:</strong> Complaints reflect citizen reporting pressure and dissatisfaction; they are not assumed to have 1:1 correspondence with distinct structural failures.
-            </li>
-            <li style="padding-left: 20px; position: relative;">
-              <span style="position: absolute; left: 0; color: var(--high-color);">⚠️</span>
-              <strong>Synthetic Educational Disclaimers:</strong> Coordinates and civic records are simulated for the Datathon 2026 challenge. All coordinates are labeled as synthetic and not real civic reports.
-            </li>
-            <li style="padding-left: 20px; position: relative;">
-              <span style="position: absolute; left: 0; color: var(--high-color);">⚠️</span>
-              <strong>Advisory Next Actions:</strong> Suggested inspection actions are algorithmic recommendations for municipal crew triage, not confirmed structural engineering diagnoses.
-            </li>
-          </ul>
+        <div class="methodology-card">
+          <div class="pillar-weight-badge">Weight: 25%</div>
+          <h3 class="methodology-h3">2. Backlog Burden</h3>
+          <p class="methodology-desc">
+            <code>2.5&times;Unresolved Incidents + 1.0&times;Open Complaints</code>.
+            Penalizes unaddressed hazards lingering without work-order closure to prioritize stagnant repairs.
+          </p>
         </div>
-      </section>
 
-    </main>
-  </div>
+        <div class="methodology-card">
+          <div class="pillar-weight-badge">Weight: 25%</div>
+          <h3 class="methodology-h3">3. Vulnerability Context</h3>
+          <p class="methodology-desc">
+            Road Condition (up to 35 pts) + School Proximity (20 pts) + Hospital Proximity (20 pts) + Pedestrians (15 pts) + Density (10 pts). Protects sensitive civilian receptors.
+          </p>
+        </div>
+
+        <div class="methodology-card">
+          <div class="pillar-weight-badge">Weight: 15%</div>
+          <h3 class="methodology-h3">4. Citizen Demand</h3>
+          <p class="methodology-desc">
+            <code>1.0&times;Total Complaints + 2.0&times;High Priority + 0.5&times;Normal Priority</code>.
+            Quantifies community dissatisfaction while remaining strictly distinct from verified physical events.
+          </p>
+        </div>
+      </div>
+
+      <div class="data-quality-banner">
+        <div class="data-quality-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          Stage 1 Quality Constraints &amp; Integrity Assurances
+        </div>
+        <ul class="data-quality-list">
+          <li><strong>Zero Data Modification:</strong> Source CSVs (<code>locations.csv</code>, <code>incidents.csv</code>, <code>public_complaints.csv</code>) remain untouched and read-only.</li>
+          <li><strong>No Target Leakage:</strong> Synthetically populated resolution hours on unresolved tickets (<code>resolved=0</code>) are strictly excluded from turnaround scoring.</li>
+          <li><strong>Complaints vs. Incidents:</strong> Public complaints represent citizen reporting sentiment and are not conflated with verified physical failures.</li>
+          <li><strong>Advisory Recommendations:</strong> All suggested actions represent algorithmic triage guidance for municipal engineering crews, not confirmed structural diagnoses.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div>
+        <strong>CityFix AI</strong> &bull; Datathon 2026 &mdash; Track 3: Smart City
+      </div>
+      <div class="footer-synthetic">
+        Synthetic educational dataset &bull; Coordinates simulated &bull; Not for real public safety dispatch
+      </div>
+    </footer>
+
+  </main>
 
   <script src="app.js"></script>
 </body>

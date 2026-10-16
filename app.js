@@ -1,6 +1,6 @@
 /**
- * CityFix AI — Municipal Command Center JavaScript
- * ===============================================
+ * CityFix AI — Clean Modern Light Theme Client Application
+ * ========================================================
  * Datathon 2026 — Track 3: Smart City (Where Should We Fix First?)
  */
 
@@ -11,9 +11,20 @@ let appData = {
   selectedLocation: null,
   map: null,
   markersLayer: null,
+  markersMap: new Map(),
   currentPage: 1,
   pageSize: 25,
   filteredLocations: [],
+};
+
+// Color Palette Constants
+const THEME_COLORS = {
+  critical: "#DC2626",
+  high: "#EA580C",
+  medium: "#D97706",
+  low: "#16A34A",
+  primary: "#2563EB",
+  secondary: "#64748B",
 };
 
 // Initialize on DOM load
@@ -26,11 +37,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderTable();
   initMap();
   populateLocationSelect();
-  selectLocation(appData.locations[0]?.location_id || "L0965");
+  
+  // Select top ranked location by default
+  const defaultLoc = appData.locations[0]?.location_id || "L0965";
+  selectLocation(defaultLoc);
 });
 
 /**
- * Load dashboard data from API or fallback to static JSON.
+ * Load dashboard data from REST API or fallback to precomputed JSON.
  */
 async function loadDashboardData() {
   const tryPaths = [
@@ -71,29 +85,55 @@ async function loadDashboardData() {
 }
 
 /**
- * Tab Navigation Setup
+ * Navigation and Smooth Scroll Setup
  */
 function setupNavigation() {
-  const navItems = document.querySelectorAll(".nav-item");
-  navItems.forEach((item) => {
-    item.addEventListener("click", () => {
-      const tabId = item.getAttribute("data-tab");
-      switchTab(tabId);
+  const links = document.querySelectorAll(".nav-link");
+  links.forEach((link) => {
+    link.addEventListener("click", (e) => {
+      links.forEach((l) => l.classList.remove("active"));
+      link.classList.add("active");
     });
   });
+
+  // Track scroll position to update active nav link
+  window.addEventListener("scroll", () => {
+    const sections = ["section-dashboard", "section-matrix", "section-evidence", "section-map", "section-analytics", "section-ai", "section-methodology"];
+    let current = "";
+    sections.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= 120 && rect.bottom >= 120) {
+          current = id;
+        }
+      }
+    });
+
+    if (current) {
+      links.forEach((link) => {
+        link.classList.toggle("active", link.getAttribute("href") === `#${current}`);
+      });
+    }
+  }, { passive: true });
 }
 
+/**
+ * Backward compatibility helper for switchTab calls.
+ */
 function switchTab(tabId) {
-  document.querySelectorAll(".nav-item").forEach((item) => {
-    item.classList.toggle("active", item.getAttribute("data-tab") === tabId);
-  });
-
-  document.querySelectorAll(".tab-panel").forEach((panel) => {
-    panel.classList.toggle("active", panel.id === tabId);
-  });
-
-  if (tabId === "tab-map" && appData.map) {
-    setTimeout(() => appData.map.invalidateSize(), 200);
+  const targetMap = {
+    "tab-dashboard": "section-dashboard",
+    "tab-rankings": "section-matrix",
+    "tab-evidence": "section-evidence",
+    "tab-map": "section-map",
+    "tab-ai": "section-ai",
+    "tab-methodology": "section-methodology",
+  };
+  const targetId = targetMap[tabId] || tabId;
+  const el = document.getElementById(targetId);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth" });
   }
 }
 
@@ -104,18 +144,21 @@ function renderDashboard() {
   if (!appData.summary) return;
   const s = appData.summary;
 
-  // KPI Numbers
-  document.getElementById("kpi-locations").textContent = s.total_locations.toLocaleString();
-  document.getElementById("kpi-incidents").textContent = s.total_incidents.toLocaleString();
-  document.getElementById("kpi-complaints").textContent = s.total_complaints.toLocaleString();
-  document.getElementById("kpi-unresolved").textContent = s.total_unresolved_incidents.toLocaleString();
-  document.getElementById("kpi-open-comp").textContent = s.total_open_complaints.toLocaleString();
-  document.getElementById("kpi-critical-hotspots").textContent = (s.priority_tiers?.Critical || 53).toLocaleString();
+  // 4 Primary KPI Numbers
+  const locEl = document.getElementById("kpi-locations");
+  const incEl = document.getElementById("kpi-incidents");
+  const compEl = document.getElementById("kpi-complaints");
+  const critEl = document.getElementById("kpi-critical-hotspots");
+
+  if (locEl) locEl.textContent = s.total_locations.toLocaleString();
+  if (incEl) incEl.textContent = s.total_incidents.toLocaleString();
+  if (compEl) compEl.textContent = s.total_complaints.toLocaleString();
+  if (critEl) critEl.textContent = (s.priority_tiers?.Critical || 53).toLocaleString();
 
   // Populate Zone dropdown
   const zoneSelect = document.getElementById("filter-zone");
   if (zoneSelect && s.zones) {
-    zoneSelect.innerHTML = `<option value="">All 20 Zones</option>` +
+    zoneSelect.innerHTML = `<option value="">All Zones</option>` +
       s.zones.map((z) => `<option value="${z}">${z}</option>`).join("");
   }
 
@@ -123,10 +166,10 @@ function renderDashboard() {
   const tierContainer = document.getElementById("chart-tiers");
   if (tierContainer && s.priority_tiers) {
     const tiers = [
-      { name: "Critical (≥ 50.0)", count: s.priority_tiers.Critical || 53, color: "var(--crit-color)" },
-      { name: "High (40.0 - 50.0)", count: s.priority_tiers.High || 215, color: "var(--high-color)" },
-      { name: "Medium (30.0 - 40.0)", count: s.priority_tiers.Medium || 404, color: "var(--med-color)" },
-      { name: "Low (< 30.0)", count: s.priority_tiers.Low || 328, color: "var(--low-color)" },
+      { name: "Critical (≥ 50.0)", count: s.priority_tiers.Critical || 53, color: THEME_COLORS.critical },
+      { name: "High (40.0 - 50.0)", count: s.priority_tiers.High || 215, color: THEME_COLORS.high },
+      { name: "Medium (30.0 - 40.0)", count: s.priority_tiers.Medium || 404, color: THEME_COLORS.medium },
+      { name: "Low (< 30.0)", count: s.priority_tiers.Low || 328, color: THEME_COLORS.low },
     ];
     renderBarGroup(tierContainer, tiers, s.total_locations);
   }
@@ -135,10 +178,10 @@ function renderDashboard() {
   const sevContainer = document.getElementById("chart-severity");
   if (sevContainer && s.severity_distribution) {
     const sevs = [
-      { name: "Critical Severity", count: s.severity_distribution.Critical || 470, color: "var(--crit-color)" },
-      { name: "High Severity", count: s.severity_distribution.High || 1985, color: "var(--high-color)" },
-      { name: "Medium Severity", count: s.severity_distribution.Medium || 3726, color: "var(--med-color)" },
-      { name: "Low Severity", count: s.severity_distribution.Low || 3819, color: "var(--low-color)" },
+      { name: "Critical Severity", count: s.severity_distribution.Critical || 470, color: THEME_COLORS.critical },
+      { name: "High Severity", count: s.severity_distribution.High || 1985, color: THEME_COLORS.high },
+      { name: "Medium Severity", count: s.severity_distribution.Medium || 3726, color: THEME_COLORS.medium },
+      { name: "Low Severity", count: s.severity_distribution.Low || 3819, color: THEME_COLORS.low },
     ];
     renderBarGroup(sevContainer, sevs, s.total_incidents);
   }
@@ -147,9 +190,9 @@ function renderDashboard() {
   const incCatContainer = document.getElementById("chart-inc-categories");
   if (incCatContainer && s.incident_categories) {
     const cats = Object.entries(s.incident_categories).map(([name, count]) => ({
-      name,
+      name: formatCategoryName(name),
       count,
-      color: "var(--teal-primary)",
+      color: THEME_COLORS.primary,
     }));
     renderBarGroup(incCatContainer, cats, s.total_incidents);
   }
@@ -158,57 +201,33 @@ function renderDashboard() {
   const compCatContainer = document.getElementById("chart-comp-categories");
   if (compCatContainer && s.complaint_categories) {
     const cats = Object.entries(s.complaint_categories).map(([name, count]) => ({
-      name,
+      name: formatCategoryName(name),
       count,
-      color: "var(--teal-accent)",
+      color: THEME_COLORS.secondary,
     }));
     renderBarGroup(compCatContainer, cats, s.total_complaints);
   }
+}
 
-  // 5. Spotlight Top 3 Cards
-  const spotlightContainer = document.getElementById("spotlight-cards");
-  if (spotlightContainer && appData.locations.length >= 3) {
-    const top3 = appData.locations.slice(0, 3);
-    spotlightContainer.innerHTML = top3.map((loc, idx) => `
-      <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="font-weight: 800; font-size: 16px; color: var(--teal-accent);">#${idx + 1} ${loc.location_id}</span>
-            <span class="tier-badge tier-${loc.priority_level.toLowerCase()}">${loc.priority_level} (${loc.priority_score})</span>
-          </div>
-          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
-            Zone: <strong>${loc.zone}</strong> • Road: <strong style="color: ${loc.road_condition === 'Critical' ? 'var(--crit-color)' : 'var(--text-bright)'};">${loc.road_condition}</strong>
-          </div>
-          <p style="font-size: 12px; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">
-            ${loc.suggested_next_action.split('.')[0]}.
-          </p>
-        </div>
-        <button class="btn-inspect" onclick="inspectFromSpotlight('${loc.location_id}')">Inspect Full Evidence →</button>
-      </div>
-    `).join("");
-  }
+function formatCategoryName(name) {
+  return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function renderBarGroup(container, items, total) {
   container.innerHTML = items.map((item) => {
     const pct = ((item.count / total) * 100).toFixed(1);
     return `
-      <div class="dist-bar-item">
-        <div class="dist-bar-label">
+      <div class="chart-bar-item">
+        <div class="chart-bar-row">
           <span>${item.name}</span>
           <span><strong>${item.count.toLocaleString()}</strong> (${pct}%)</span>
         </div>
-        <div class="dist-bar-track">
-          <div class="dist-bar-fill" style="width: ${pct}%; background-color: ${item.color};"></div>
+        <div class="chart-bar-track">
+          <div class="chart-bar-fill" style="width: ${pct}%; background-color: ${item.color};"></div>
         </div>
       </div>
     `;
   }).join("");
-}
-
-function inspectFromSpotlight(locationId) {
-  selectLocation(locationId);
-  switchTab("tab-evidence");
 }
 
 /**
@@ -288,25 +307,32 @@ function renderTable() {
 
   const total = appData.filteredLocations.length;
   if (matchCount) {
-    matchCount.textContent = `Showing ${total.toLocaleString()} location${total === 1 ? "" : "s"}`;
+    matchCount.textContent = `${total.toLocaleString()} location${total === 1 ? "" : "s"}`;
   }
 
   const start = (appData.currentPage - 1) * appData.pageSize;
   const end = Math.min(start + appData.pageSize, total);
   const pageLocations = appData.filteredLocations.slice(start, end);
 
-  document.getElementById("page-start").textContent = total > 0 ? (start + 1).toLocaleString() : "0";
-  document.getElementById("page-end").textContent = end.toLocaleString();
-  document.getElementById("page-total").textContent = total.toLocaleString();
-  document.getElementById("page-indicator").textContent = `Page ${appData.currentPage} of ${Math.max(1, Math.ceil(total / appData.pageSize))}`;
+  const startEl = document.getElementById("page-start");
+  const endEl = document.getElementById("page-end");
+  const totalEl = document.getElementById("page-total");
+  const indicatorEl = document.getElementById("page-indicator");
+  const btnPrev = document.getElementById("btn-prev-page");
+  const btnNext = document.getElementById("btn-next-page");
 
-  document.getElementById("btn-prev-page").disabled = appData.currentPage <= 1;
-  document.getElementById("btn-next-page").disabled = end >= total;
+  if (startEl) startEl.textContent = total > 0 ? (start + 1).toLocaleString() : "0";
+  if (endEl) endEl.textContent = end.toLocaleString();
+  if (totalEl) totalEl.textContent = total.toLocaleString();
+  if (indicatorEl) indicatorEl.textContent = `Page ${appData.currentPage} of ${Math.max(1, Math.ceil(total / appData.pageSize))}`;
+
+  if (btnPrev) btnPrev.disabled = appData.currentPage <= 1;
+  if (btnNext) btnNext.disabled = end >= total;
 
   if (pageLocations.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-muted);">
+        <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-secondary);">
           No locations match the selected criteria. Try resetting the filters.
         </td>
       </tr>
@@ -314,43 +340,40 @@ function renderTable() {
     return;
   }
 
-  tbody.innerHTML = pageLocations.map((loc, idx) => {
-    const globalRank = start + idx + 1;
+  tbody.innerHTML = pageLocations.map((loc) => {
+    const isSelected = appData.selectedLocation && appData.selectedLocation.location_id === loc.location_id;
     const tierClass = `tier-${loc.priority_level.toLowerCase()}`;
-    const keyFactor = loc.contributing_factors?.[0] || "Routine monitoring";
 
     return `
-      <tr onclick="selectLocation('${loc.location_id}')" style="cursor: pointer;">
-        <td style="font-weight: 700; color: var(--text-muted); font-family: var(--font-mono);">${globalRank}</td>
-        <td style="font-weight: 700; color: var(--teal-accent); font-family: var(--font-mono);">${loc.location_id}</td>
+      <tr class="${isSelected ? 'selected-row' : ''}" onclick="selectLocation('${loc.location_id}')">
+        <td class="col-id">${loc.location_id}</td>
         <td>${loc.zone}</td>
-        <td style="font-family: var(--font-mono); font-weight: 800;">${loc.priority_score.toFixed(2)}</td>
         <td><span class="tier-badge ${tierClass}">${loc.priority_level}</span></td>
-        <td>${loc.incident_count} <span style="font-size: 11px; color: var(--text-muted);">(${loc.critical_incidents} crit / ${loc.high_incidents} high)</span></td>
-        <td>${loc.complaint_count}</td>
-        <td style="color: ${loc.unresolved_incidents >= 5 ? 'var(--crit-color)' : 'var(--text-main)'}; font-weight: 700;">${loc.unresolved_incidents}</td>
-        <td><span style="color: ${loc.road_condition === 'Critical' ? 'var(--crit-color)' : loc.road_condition === 'Poor' ? 'var(--high-color)' : 'var(--text-main)'};">${loc.road_condition}</span></td>
-        <td style="max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${keyFactor}">${keyFactor}</td>
-        <td><button class="btn-inspect" onclick="event.stopPropagation(); selectLocation('${loc.location_id}'); switchTab('tab-evidence');">Inspect</button></td>
+        <td><strong>${loc.incident_count}</strong> <span style="font-size: 11px; color: var(--text-secondary);">(${loc.critical_incidents} crit)</span></td>
+        <td><strong>${loc.complaint_count}</strong></td>
+        <td class="col-score">${loc.priority_score.toFixed(2)}</td>
       </tr>
     `;
   }).join("");
 }
 
 /**
- * Interactive Leaflet Map Initialization
+ * Interactive Leaflet Map Initialization with Light Basemap
  */
 function initMap() {
   const mapElement = document.getElementById("city-map");
   if (!mapElement || typeof L === "undefined") return;
 
   // Center on Vijayawada/Guntur simulated coordinates (16.45 N, 80.50 E)
-  appData.map = L.map("city-map").setView([16.446, 80.500], 11);
+  appData.map = L.map("city-map", {
+    zoomControl: true,
+  }).setView([16.446, 80.500], 11);
 
-  // High-contrast dark tile layer
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Synthetic CityFix AI Data',
+  // CartoDB Positron clean light basemap
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    maxZoom: 19,
+    subdomains: "abcd",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | Synthetic CityFix AI Data',
   }).addTo(appData.map);
 
   appData.markersLayer = L.layerGroup().addTo(appData.map);
@@ -360,48 +383,50 @@ function initMap() {
 function updateMapMarkers() {
   if (!appData.map || !appData.markersLayer) return;
   appData.markersLayer.clearLayers();
+  appData.markersMap.clear();
 
   const colorMap = {
-    Critical: "#ff4757",
-    High: "#ffa502",
-    Medium: "#eccc68",
-    Low: "#70a1ff",
+    Critical: THEME_COLORS.critical,
+    High: THEME_COLORS.high,
+    Medium: THEME_COLORS.medium,
+    Low: THEME_COLORS.low,
   };
 
-  // Render locations (up to 300 visible on map for fast rendering)
+  // Render locations (up to 300 visible on map for crisp performance)
   const locsToRender = appData.filteredLocations.slice(0, 300);
 
   locsToRender.forEach((loc) => {
-    const color = colorMap[loc.priority_level] || "#00b4d8";
-    const radius = loc.priority_level === "Critical" ? 9 : loc.priority_level === "High" ? 7 : 5;
+    const color = colorMap[loc.priority_level] || THEME_COLORS.primary;
+    const radius = loc.priority_level === "Critical" ? 8 : loc.priority_level === "High" ? 6 : 5;
 
     const marker = L.circleMarker([loc.latitude, loc.longitude], {
       radius: radius,
       fillColor: color,
-      color: "#070d1e",
+      color: "#FFFFFF",
       weight: 1.5,
       opacity: 1,
       fillOpacity: 0.85,
     });
 
     const popupHtml = `
-      <div style="font-family: sans-serif; color: #111;">
-        <div style="font-weight: 800; font-size: 14px; margin-bottom: 4px;">
+      <div style="font-family: var(--font-sans); color: #1E293B; font-size: 13px; min-width: 170px;">
+        <div style="font-weight: 800; font-size: 14px; margin-bottom: 4px; color: #2563EB;">
           ${loc.location_id} (${loc.zone})
         </div>
-        <div style="font-size: 12px; margin-bottom: 6px;">
-          Priority: <strong style="color: ${color};">${loc.priority_level} (${loc.priority_score})</strong><br>
-          Road: <strong>${loc.road_condition}</strong> • Incidents: <strong>${loc.incident_count}</strong><br>
-          Backlog: <strong>${loc.unresolved_incidents} active</strong>
+        <div style="font-size: 12px; color: #64748B; margin-bottom: 8px; line-height: 1.4;">
+          Priority: <strong style="color: ${color};">${loc.priority_level} (${loc.priority_score.toFixed(1)})</strong><br>
+          Road: <strong style="color: #1E293B;">${loc.road_condition}</strong> &bull; Incidents: <strong style="color: #1E293B;">${loc.incident_count}</strong><br>
+          Backlog: <strong style="color: #1E293B;">${loc.unresolved_incidents} active</strong>
         </div>
-        <button style="background: #00b4d8; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700;" onclick="selectLocation('${loc.location_id}'); switchTab('tab-evidence');">
-          Inspect Evidence →
+        <button class="btn btn-primary btn-sm" style="width: 100%;" onclick="selectLocation('${loc.location_id}'); document.getElementById('section-evidence').scrollIntoView({ behavior: 'smooth' });">
+          Inspect Evidence &rarr;
         </button>
       </div>
     `;
 
     marker.bindPopup(popupHtml);
     appData.markersLayer.addLayer(marker);
+    appData.markersMap.set(loc.location_id, marker);
   });
 }
 
@@ -413,7 +438,7 @@ function populateLocationSelect() {
   if (!select) return;
 
   select.innerHTML = appData.locations.map((loc) => `
-    <option value="${loc.location_id}">${loc.location_id} — ${loc.zone} (${loc.priority_level}, ${loc.priority_score})</option>
+    <option value="${loc.location_id}">${loc.location_id} (${loc.zone})</option>
   `).join("");
 
   select.addEventListener("change", (e) => {
@@ -426,14 +451,20 @@ function selectLocation(locationId) {
   if (!loc) return;
 
   appData.selectedLocation = loc;
+  
   const select = document.getElementById("evidence-location-select");
   if (select) select.value = loc.location_id;
 
   renderEvidenceContent(loc);
+  renderTable(); // Update selected-row highlight
 
-  // If map exists, pan to location
+  // Pan to map marker if available
   if (appData.map) {
     appData.map.setView([loc.latitude, loc.longitude], 13);
+    const marker = appData.markersMap.get(loc.location_id);
+    if (marker) {
+      marker.openPopup();
+    }
   }
 }
 
@@ -444,117 +475,121 @@ function renderEvidenceContent(loc) {
   const tierClass = `tier-${loc.priority_level.toLowerCase()}`;
 
   container.innerHTML = `
-    <!-- Header Card -->
-    <div class="evidence-header-card">
+    <!-- Top Hero Card -->
+    <div class="evidence-hero">
       <div>
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-          <h1 style="font-size: 24px; font-weight: 800; color: var(--text-bright);">${loc.location_id}</h1>
+        <div class="evidence-id">${loc.location_id}</div>
+        <div class="evidence-meta">
           <span class="tier-badge ${tierClass}">${loc.priority_level} Priority</span>
-          <span style="font-size: 13px; color: var(--text-muted);">${loc.zone}</span>
+          <span style="font-size: 13px; color: var(--text-secondary);">${loc.zone}</span>
         </div>
-        <p style="font-size: 13px; color: var(--text-muted);">
-          Coordinates: <code style="font-family: var(--font-mono); color: var(--teal-primary);">${loc.latitude.toFixed(6)}° N, ${loc.longitude.toFixed(6)}° E</code> 
-          (Simulated Synthetic Bounding Box)
-        </p>
       </div>
-      <div class="evidence-score-circle">
-        <div class="score-num">${loc.priority_score.toFixed(1)}</div>
-        <div class="score-lbl">Priority Score</div>
+      <div class="evidence-score-badge">
+        <div class="score-display">${loc.priority_score.toFixed(1)}</div>
+        <div class="score-label">Priority Score / 100</div>
+      </div>
+    </div>
+
+    <!-- Quick Stats Grid -->
+    <div class="evidence-stats-grid">
+      <div class="stat-cell">
+        <div class="stat-label">Incidents</div>
+        <div class="stat-val">${loc.incident_count} <span style="font-size: 11px; font-weight: 500; color: var(--crit-color);">(${loc.critical_incidents} crit)</span></div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Complaints</div>
+        <div class="stat-val">${loc.complaint_count}</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Backlog</div>
+        <div class="stat-val" style="color: ${loc.unresolved_incidents >= 5 ? 'var(--crit-color)' : 'var(--text-primary)'};">${loc.unresolved_incidents} active</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Road Condition</div>
+        <div class="stat-val" style="color: ${loc.road_condition === 'Critical' ? 'var(--crit-color)' : loc.road_condition === 'Poor' ? 'var(--high-color)' : 'var(--text-primary)'};">${loc.road_condition}</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Near School</div>
+        <div class="stat-val">${loc.near_school ? '<span style="color: var(--high-color);">Yes</span>' : 'No'}</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Near Hospital</div>
+        <div class="stat-val">${loc.near_hospital ? '<span style="color: var(--crit-color);">Yes</span>' : 'No'}</div>
       </div>
     </div>
 
     <!-- 4-Pillar Score Breakdown -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">4-Pillar Normalized Score Breakdown</div>
-      </div>
-      <div class="dist-bar-group">
-        <div class="dist-bar-item">
-          <div class="dist-bar-label"><span>Incident Hazard Subscore (35%)</span><span><strong>${loc.subscore_incident}</strong> / 100</span></div>
-          <div class="dist-bar-track"><div class="dist-bar-fill" style="width: ${loc.subscore_incident}%; background-color: var(--crit-color);"></div></div>
-        </div>
-        <div class="dist-bar-item">
-          <div class="dist-bar-label"><span>Backlog Burden Subscore (25%)</span><span><strong>${loc.subscore_backlog}</strong> / 100</span></div>
-          <div class="dist-bar-track"><div class="dist-bar-fill" style="width: ${loc.subscore_backlog}%; background-color: var(--high-color);"></div></div>
-        </div>
-        <div class="dist-bar-item">
-          <div class="dist-bar-label"><span>Vulnerability Context Subscore (25%)</span><span><strong>${loc.subscore_vulnerability}</strong> / 100</span></div>
-          <div class="dist-bar-track"><div class="dist-bar-fill" style="width: ${loc.subscore_vulnerability}%; background-color: var(--med-color);"></div></div>
-        </div>
-        <div class="dist-bar-item">
-          <div class="dist-bar-label"><span>Citizen Demand Subscore (15%)</span><span><strong>${loc.subscore_complaint}</strong> / 100</span></div>
-          <div class="dist-bar-track"><div class="dist-bar-fill" style="width: ${loc.subscore_complaint}%; background-color: var(--teal-primary);"></div></div>
-        </div>
-      </div>
-
-      <!-- Suggested Next Action Box -->
-      <div class="evidence-action-box">
-        <div class="action-title">💡 Suggested Municipal Next Action</div>
-        <div style="font-size: 13px; font-weight: 600; color: var(--text-bright); line-height: 1.5;">
-          ${loc.suggested_next_action}
-        </div>
-      </div>
-    </div>
-
-    <!-- Location Characteristics & Sensitivity -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Physical Context &amp; Receptor Proximity</div>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
-        <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm);">
-          <div style="color: var(--text-muted); font-size: 11px;">ROAD CONDITION</div>
-          <div style="font-weight: 700; color: ${loc.road_condition === 'Critical' ? 'var(--crit-color)' : loc.road_condition === 'Poor' ? 'var(--high-color)' : 'var(--text-bright)'}; font-size: 15px;">
-            ${loc.road_condition}
+    <div>
+      <div class="evidence-section-title">4-Pillar Score Breakdown</div>
+      <div class="pillar-group">
+        <div class="pillar-row">
+          <div class="pillar-labels">
+            <span>Incident Hazard (35%)</span>
+            <strong>${loc.subscore_incident.toFixed(1)} / 100</strong>
+          </div>
+          <div class="pillar-track">
+            <div class="pillar-fill" style="width: ${loc.subscore_incident}%; background-color: var(--crit-color);"></div>
           </div>
         </div>
-        <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm);">
-          <div style="color: var(--text-muted); font-size: 11px;">ROAD TYPE</div>
-          <div style="font-weight: 700; color: var(--text-bright); font-size: 15px;">${loc.road_type}</div>
-        </div>
-        <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm);">
-          <div style="color: var(--text-muted); font-size: 11px;">PEDESTRIAN ACTIVITY</div>
-          <div style="font-weight: 700; color: var(--text-bright); font-size: 15px;">${loc.pedestrian_activity}</div>
-        </div>
-        <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm);">
-          <div style="color: var(--text-muted); font-size: 11px;">POPULATION DENSITY</div>
-          <div style="font-weight: 700; color: var(--text-bright); font-size: 15px;">${loc.population_density.toLocaleString()} /km²</div>
-        </div>
-        <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm);">
-          <div style="color: var(--text-muted); font-size: 11px;">NEAR SCHOOL</div>
-          <div style="font-weight: 700; color: ${loc.near_school ? 'var(--high-color)' : 'var(--text-muted)'}; font-size: 14px;">
-            ${loc.near_school ? 'Yes (Active Corridor)' : 'No'}
+
+        <div class="pillar-row">
+          <div class="pillar-labels">
+            <span>Backlog Burden (25%)</span>
+            <strong>${loc.subscore_backlog.toFixed(1)} / 100</strong>
+          </div>
+          <div class="pillar-track">
+            <div class="pillar-fill" style="width: ${loc.subscore_backlog}%; background-color: var(--high-color);"></div>
           </div>
         </div>
-        <div style="background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-sm);">
-          <div style="color: var(--text-muted); font-size: 11px;">NEAR HOSPITAL</div>
-          <div style="font-weight: 700; color: ${loc.near_hospital ? 'var(--crit-color)' : 'var(--text-muted)'}; font-size: 14px;">
-            ${loc.near_hospital ? 'Yes (Emergency Route)' : 'No'}
+
+        <div class="pillar-row">
+          <div class="pillar-labels">
+            <span>Vulnerability Context (25%)</span>
+            <strong>${loc.subscore_vulnerability.toFixed(1)} / 100</strong>
+          </div>
+          <div class="pillar-track">
+            <div class="pillar-fill" style="width: ${loc.subscore_vulnerability}%; background-color: var(--med-color);"></div>
+          </div>
+        </div>
+
+        <div class="pillar-row">
+          <div class="pillar-labels">
+            <span>Citizen Demand (15%)</span>
+            <strong>${loc.subscore_complaint.toFixed(1)} / 100</strong>
+          </div>
+          <div class="pillar-track">
+            <div class="pillar-fill" style="width: ${loc.subscore_complaint}%; background-color: var(--accent-primary);"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Why This Location Ranked High -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Key Contributing Factors</div>
+    <!-- Suggested Municipal Action Box -->
+    <div class="action-box">
+      <div class="action-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        Suggested Municipal Action
       </div>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
-        Algorithmic drivers identified from recorded physical events and spatial attributes:
-      </p>
+      <div class="action-text">${loc.suggested_next_action}</div>
+    </div>
+
+    <!-- Contributing Factors -->
+    <div>
+      <div class="evidence-section-title">Key Contributing Factors</div>
       <ul class="factors-list">
         ${loc.contributing_factors.map((f) => `<li>${f}</li>`).join("")}
       </ul>
     </div>
 
-    <!-- Data Quality & Missing Evidence -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Data Boundaries &amp; Missing Evidence</div>
-      </div>
-      <ul class="factors-list" style="margin-top: 0;">
-        ${loc.missing_evidence_or_limitations.map((lim) => `<li style="color: var(--text-muted);">${lim}</li>`).join("")}
+    <!-- Data Boundaries & Limitations -->
+    <div>
+      <div class="evidence-section-title" style="color: var(--text-muted);">Data Boundaries &amp; Limitations</div>
+      <ul class="limitations-list">
+        ${loc.missing_evidence_or_limitations.map((lim) => `<li>${lim}</li>`).join("")}
       </ul>
     </div>
   `;
@@ -587,12 +622,11 @@ async function runAiQuery(prompt) {
 
   if (input) input.value = prompt;
   title.innerHTML = `<span>⏳</span> Analyzing: "${prompt}"...`;
-  text.textContent = "Querying civic data engine across all 1,000 city locations...";
+  text.textContent = "Querying civic prioritization engine across all 1,000 city locations...";
   matchedCards.innerHTML = "";
   extra.innerHTML = "";
 
-  // Switch to AI tab if not active
-  switchTab("tab-ai");
+  document.getElementById("section-ai")?.scrollIntoView({ behavior: "smooth" });
 
   try {
     // Try REST API first
@@ -620,7 +654,7 @@ function clientSideQuery(q) {
     if (query.includes(loc.location_id.toLowerCase())) {
       return {
         title: `Analysis for Location ${loc.location_id} (${loc.zone})`,
-        answer: `Location ${loc.location_id} is evaluated at ${loc.priority_level} priority with a score of ${loc.priority_score.toFixed(2)}/100. It has ${loc.incident_count} recorded incidents (${loc.critical_incidents} critical) and ${loc.complaint_count} complaints, with ${loc.unresolved_incidents} unresolved issues. Road condition is rated ${loc.road_condition}.`,
+        answer: `Location ${loc.location_id} is evaluated at ${loc.priority_level} priority with a score of ${loc.priority_score.toFixed(2)}/100. It has ${loc.incident_count} recorded incidents (${loc.critical_incidents} critical) and ${loc.complaint_count} public complaints, with ${loc.unresolved_incidents} unresolved issues. Road condition is rated '${loc.road_condition}'.`,
         suggested_next_action: loc.suggested_next_action,
         matched_locations: [loc],
       };
@@ -638,7 +672,7 @@ function clientSideQuery(q) {
     };
   }
 
-  // Drainage
+  // Drainage & flooding
   if (query.includes("drain") || query.includes("flood")) {
     const top = [...locs].sort((a, b) => (b.inc_blocked_drain + b.inc_flooding) - (a.inc_blocked_drain + a.inc_flooding)).slice(0, 5);
     return {
@@ -675,33 +709,48 @@ function renderAiResponse(data) {
   const matchedCards = document.getElementById("ai-matched-container");
   const extra = document.getElementById("ai-result-extra");
 
-  title.innerHTML = `<span>⚡</span> ${data.title}`;
+  title.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span>${data.title}</span>
+  `;
   text.textContent = data.answer;
 
   if (data.suggested_next_action) {
     extra.innerHTML = `
-      <div class="evidence-action-box" style="margin-top: 8px;">
-        <div class="action-title">Actionable Recommendation</div>
-        <div style="font-size: 13px; color: var(--text-bright);">${data.suggested_next_action}</div>
+      <div class="action-box">
+        <div class="action-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          Actionable Recommendation
+        </div>
+        <div class="action-text">${data.suggested_next_action}</div>
       </div>
     `;
   }
 
   if (data.matched_locations && data.matched_locations.length > 0) {
-    matchedCards.innerHTML = data.matched_locations.map((loc) => `
-      <div class="matched-card" onclick="selectLocation('${loc.location_id}'); switchTab('tab-evidence');">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-          <strong style="color: var(--teal-accent);">${loc.location_id}</strong>
-          <span class="tier-badge tier-${loc.priority_level.toLowerCase()}">${loc.priority_level}</span>
+    matchedCards.innerHTML = data.matched_locations.map((loc) => {
+      const tierClass = `tier-${loc.priority_level.toLowerCase()}`;
+      return `
+        <div class="matched-card" onclick="selectLocation('${loc.location_id}'); document.getElementById('section-evidence').scrollIntoView({ behavior: 'smooth' });">
+          <div class="matched-header">
+            <span class="matched-id">${loc.location_id}</span>
+            <span class="tier-badge ${tierClass}">${loc.priority_level}</span>
+          </div>
+          <div class="matched-details">
+            Score: <strong>${loc.priority_score.toFixed(1)}</strong> &bull; ${loc.zone}<br>
+            Road: <strong>${loc.road_condition}</strong> &bull; Backlog: <strong>${loc.unresolved_incidents} active</strong>
+          </div>
+          <div class="matched-action">
+            Inspect Evidence &rarr;
+          </div>
         </div>
-        <div style="font-size: 12px; color: var(--text-muted);">
-          Score: <strong>${loc.priority_score.toFixed(1)}</strong> • ${loc.zone}<br>
-          Road: <strong>${loc.road_condition}</strong> • Backlog: <strong>${loc.unresolved_incidents}</strong>
-        </div>
-        <div style="font-size: 11px; color: var(--teal-primary); margin-top: 6px; font-weight: 600;">
-          Inspect Evidence →
-        </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
   }
 }
