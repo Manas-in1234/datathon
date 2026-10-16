@@ -1,0 +1,5 @@
+# CityFix AI - Datathon 2026 Track 3
+pandas>=2.0.0
+numpy>=1.24.0
+python-dateutil>=2.8.2
+pytest>=7.0.0
