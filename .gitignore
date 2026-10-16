@@ -1,44 +1,28 @@
-# Byte-compiled / optimized / cache files
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
 
-# Caches and test artifacts
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-.hypothesis/
+# Local Databases & Secrets
+citidy.db
+citidy.db-journal
+.env
 
-# Environments and dependencies
-.venv/
-venv/
-env/
-ENV/
-build/
-dist/
-*.egg-info/
-
-# IDE and OS files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# OS Generated Files
 .DS_Store
 Thumbs.db
-desktop.ini
+ehthumbs.db
 
-# Secrets and environment variables
-.env
-.env.*
-*.env
-secrets.json
-*.key
-*.pem
+# Dynamic / Ephemeral Uploads (preserve demonstration SVGs and gitkeep)
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+!uploads/demo_pothole_before.svg
+!uploads/demo_pothole_after.svg
+!uploads/.gitkeep
 
-# Scratch files and temporary logs
-*.log
-scratch/
+# IDE and Editor Cache
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

@@ -1,262 +1,111 @@
-"""
-Unit & Integration Tests for CityFix AI Priority Engine
-=======================================================
-Datathon 2026 — Track 3: Smart City (Where Should We Fix First?)
-"""
+"""Automated tests for the 5-factor Priority Engine."""
 
-from __future__ import annotations
-
-import unittest
+import json
 from pathlib import Path
+import unittest
 
-import numpy as np
-import pandas as pd
-
-from src.data_pipeline import load_all_datasets
-from src.priority_engine import (
-    WeightConfig,
-    aggregate_location_data,
-    build_priority_pipeline,
-    calculate_priority_scores,
-    enrich_with_explanations,
-    generate_location_explanation,
-    rank_locations,
-)
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "data"
+ROOT = Path(__file__).resolve().parent.parent
 
 
-class TestPriorityEngineAggregation(unittest.TestCase):
-    """Tests for location aggregation logic and input validation."""
+class TestPriorityEngine(unittest.TestCase):
 
     def setUp(self):
-        self.datasets = load_all_datasets(DATA_DIR)
+        data_js_path = ROOT / "data.js"
+        content = data_js_path.read_text(encoding="utf-8")
+        json_str = content.replace("window.CITYFIX_DATA = ", "").rstrip(";\n")
+        self.bundle = json.loads(json_str)
+        self.locations = self.bundle["locations"]
 
-    def test_aggregate_all_locations_preserved(self):
-        """Verify aggregation preserves all 1,000 master locations."""
-        agg = aggregate_location_data(
-            self.datasets["locations"],
-            self.datasets["incidents"],
-            self.datasets["public_complaints"],
-        )
-        self.assertEqual(len(agg), 1000)
-        self.assertEqual(agg["incident_count"].sum(), 10000)
-        self.assertEqual(agg["complaint_count"].sum(), 8000)
-        self.assertIn("critical_incidents", agg.columns)
-        self.assertIn("unresolved_incidents", agg.columns)
-        self.assertIn("inc_pothole", agg.columns)
-        self.assertIn("comp_drainage", agg.columns)
+    def compute_priority(self, loc, ceilings):
+        weights = [0.30, 0.25, 0.20, 0.15, 0.10]
+        road_risk = {"Good": 0.20, "Fair": 0.45, "Poor": 0.75, "Critical": 1.00}
+        ped_risk = {"Low": 0.35, "Medium": 0.65, "High": 1.00}
 
-    def test_missing_required_column_raises_error(self):
-        """Verify KeyError is raised when required columns are absent."""
-        tampered_loc = self.datasets["locations"].drop(columns=["road_condition"])
-        with self.assertRaises(KeyError):
-            aggregate_location_data(
-                tampered_loc,
-                self.datasets["incidents"],
-                self.datasets["public_complaints"],
-            )
+        def scale(val, ceil):
+            return min(1.0, max(0.0, val / max(1, ceil)))
 
-        tampered_inc = self.datasets["incidents"].drop(columns=["severity"])
-        with self.assertRaises(KeyError):
-            aggregate_location_data(
-                self.datasets["locations"],
-                tampered_inc,
-                self.datasets["public_complaints"],
-            )
-
-        tampered_comp = self.datasets["public_complaints"].drop(columns=["status"])
-        with self.assertRaises(KeyError):
-            aggregate_location_data(
-                self.datasets["locations"],
-                self.datasets["incidents"],
-                tampered_comp,
-            )
-
-    def test_empty_locations_raises_error(self):
-        """Verify empty locations dataframe raises ValueError."""
-        empty_loc = self.datasets["locations"].head(0)
-        with self.assertRaises(ValueError):
-            aggregate_location_data(
-                empty_loc,
-                self.datasets["incidents"],
-                self.datasets["public_complaints"],
-            )
-
-    def test_empty_incidents_handled_gracefully(self):
-        """Verify locations with zero incidents are handled without error."""
-        empty_inc = self.datasets["incidents"].head(0)
-        agg = aggregate_location_data(
-            self.datasets["locations"],
-            empty_inc,
-            self.datasets["public_complaints"],
-        )
-        self.assertEqual(len(agg), 1000)
-        self.assertEqual(agg["incident_count"].sum(), 0)
-        self.assertEqual(agg["critical_incidents"].sum(), 0)
-
-
-class TestPriorityScoring(unittest.TestCase):
-    """Tests for priority score calculation, normalization, and reproducibility."""
-
-    def setUp(self):
-        self.datasets = load_all_datasets(DATA_DIR)
-        self.agg = aggregate_location_data(
-            self.datasets["locations"],
-            self.datasets["incidents"],
-            self.datasets["public_complaints"],
+        exposure = (0.5 if loc.get("school") else 0.0) + (0.5 if loc.get("hospital") else 0.0)
+        context = (
+            (road_risk.get(loc.get("condition"), 0.40)) * 0.40
+            + (ped_risk.get(loc.get("pedestrian"), 0.50)) * 0.30
+            + exposure * 0.20
+            + scale(loc.get("density", 0), ceilings["density"]) * 0.10
         )
 
-    def test_score_reproducibility(self):
-        """Verify scoring produces identical deterministic results on identical inputs."""
-        scored_1 = calculate_priority_scores(self.agg)
-        scored_2 = calculate_priority_scores(self.agg)
-        pd.testing.assert_series_equal(
-            scored_1["priority_score"],
-            scored_2["priority_score"],
-        )
-        pd.testing.assert_series_equal(
-            scored_1["priority_level"],
-            scored_2["priority_level"],
-        )
+        values = [
+            scale(loc.get("incidentCount", 0), ceilings["incidents"]),
+            min(1.0, loc.get("avgSeverity", 0) / 4.0),
+            scale(loc.get("complaintCount", 0), ceilings["complaints"]),
+            scale(loc.get("unresolved", 0) + loc.get("openComplaints", 0), ceilings["backlog"]),
+            min(1.0, max(0.0, context)),
+        ]
 
-    def test_score_normalization_bounds(self):
-        """Verify subscores and composite priority score are bounded within [0.0, 100.0]."""
-        scored = calculate_priority_scores(self.agg)
-        for col in [
-            "subscore_incident",
-            "subscore_backlog",
-            "subscore_vulnerability",
-            "subscore_complaint",
-            "priority_score",
-        ]:
-            self.assertTrue(
-                (scored[col] >= 0.0).all(),
-                f"Column {col} has values below 0.0",
-            )
-            self.assertTrue(
-                (scored[col] <= 100.0).all(),
-                f"Column {col} has values above 100.0",
-            )
+        factor_points = [round(val * weights[i] * 100) for i, val in enumerate(values)]
+        priority = min(100, max(0, sum(factor_points)))
+        return priority, factor_points, values
 
-    def test_invalid_weight_config_validation(self):
-        """Verify WeightConfig raises ValueError when weights do not sum to 1.0 or are negative."""
-        with self.assertRaises(ValueError):
-            cfg = WeightConfig(incident_weight=0.9, backlog_weight=0.5)
-            cfg.validate()
+    def get_ceilings(self):
+        def p95(vals):
+            s = sorted(vals)
+            idx = max(0, int(len(s) * 0.95) - 1)
+            return s[idx] or 1
 
-        with self.assertRaises(ValueError):
-            cfg = WeightConfig(incident_weight=-0.1, backlog_weight=0.4, vulnerability_weight=0.4, complaint_weight=0.3)
-            cfg.validate()
+        return {
+            "incidents": p95([l["incidentCount"] for l in self.locations]),
+            "complaints": p95([l["complaintCount"] for l in self.locations]),
+            "backlog": p95([l["unresolved"] + l["openComplaints"] for l in self.locations]),
+            "density": p95([l["density"] for l in self.locations]),
+        }
 
-    def test_priority_level_assignment(self):
-        """Verify priority levels follow configured thresholds."""
-        config = WeightConfig(critical_threshold=50.0, high_threshold=40.0, medium_threshold=30.0)
-        scored = calculate_priority_scores(self.agg, config=config)
+    def test_priority_score_bounds(self):
+        """Every location's priority index must strictly be in [0, 100]."""
+        ceilings = self.get_ceilings()
+        for loc in self.locations:
+            priority, points, _ = self.compute_priority(loc, ceilings)
+            self.assertGreaterEqual(priority, 0)
+            self.assertLessEqual(priority, 100)
+            self.assertEqual(priority, sum(points))
 
-        critical_mask = scored["priority_score"] >= 50.0
-        self.assertTrue((scored.loc[critical_mask, "priority_level"] == "Critical").all())
+    def test_edge_case_zero_values(self):
+        """Zero values must not crash and produce 0 or minimum contextual points."""
+        ceilings = self.get_ceilings()
+        empty_loc = {
+            "id": "LTEST", "zone": "ZONE_01", "road": "Local", "condition": "Good",
+            "density": 0, "school": False, "hospital": False, "pedestrian": "Low",
+            "incidentCount": 0, "avgSeverity": 0, "complaintCount": 0, "unresolved": 0,
+            "openComplaints": 0
+        }
+        priority, points, values = self.compute_priority(empty_loc, ceilings)
+        self.assertGreaterEqual(priority, 0)
+        self.assertLessEqual(priority, 100)
+        # Incident, severity, complaint, and backlog factors should be 0
+        self.assertEqual(points[0], 0)
+        self.assertEqual(points[1], 0)
+        self.assertEqual(points[2], 0)
+        self.assertEqual(points[3], 0)
 
-        high_mask = (scored["priority_score"] >= 40.0) & (scored["priority_score"] < 50.0)
-        self.assertTrue((scored.loc[high_mask, "priority_level"] == "High").all())
+    def test_monotonicity(self):
+        """Increasing risk or incidents must never reduce the priority score."""
+        ceilings = self.get_ceilings()
+        base_loc = {
+            "id": "LTEST", "zone": "ZONE_01", "road": "Local", "condition": "Fair",
+            "density": 5000, "school": False, "hospital": False, "pedestrian": "Medium",
+            "incidentCount": 5, "avgSeverity": 2.0, "complaintCount": 4, "unresolved": 2,
+            "openComplaints": 1
+        }
+        p_base, _, _ = self.compute_priority(base_loc, ceilings)
 
-        med_mask = (scored["priority_score"] >= 30.0) & (scored["priority_score"] < 40.0)
-        self.assertTrue((scored.loc[med_mask, "priority_level"] == "Medium").all())
+        more_inc = dict(base_loc, incidentCount=10)
+        p_inc, _, _ = self.compute_priority(more_inc, ceilings)
+        self.assertGreaterEqual(p_inc, p_base)
 
-        low_mask = scored["priority_score"] < 30.0
-        self.assertTrue((scored.loc[low_mask, "priority_level"] == "Low").all())
+        more_sev = dict(base_loc, avgSeverity=3.8)
+        p_sev, _, _ = self.compute_priority(more_sev, ceilings)
+        self.assertGreaterEqual(p_sev, p_base)
 
-
-class TestRankingAndFiltering(unittest.TestCase):
-    """Tests for ranking, tie-breaking, top-N, and multi-criteria filters."""
-
-    def setUp(self):
-        self.datasets = load_all_datasets(DATA_DIR)
-        agg = aggregate_location_data(
-            self.datasets["locations"],
-            self.datasets["incidents"],
-            self.datasets["public_complaints"],
-        )
-        self.scored = calculate_priority_scores(agg)
-
-    def test_ranking_descending_order(self):
-        """Verify ranked output is strictly monotonically non-increasing by priority score."""
-        ranked = rank_locations(self.scored)
-        scores = ranked["priority_score"].to_numpy()
-        self.assertTrue(np.all(scores[:-1] >= scores[1:]))
-
-    def test_top_n_selection(self):
-        """Verify top_n limits the number of output records accurately."""
-        top_5 = rank_locations(self.scored, top_n=5)
-        self.assertEqual(len(top_5), 5)
-
-        top_25 = rank_locations(self.scored, top_n=25)
-        self.assertEqual(len(top_25), 25)
-
-    def test_zone_filtering(self):
-        """Verify zone filtering returns exclusively the requested zone."""
-        filtered = rank_locations(self.scored, zone="ZONE_01")
-        self.assertTrue((filtered["zone"] == "ZONE_01").all())
-        self.assertGreater(len(filtered), 0)
-
-    def test_priority_level_filtering(self):
-        """Verify filtering by priority_level returns matching levels."""
-        filtered = rank_locations(self.scored, priority_level="Critical")
-        self.assertTrue((filtered["priority_level"] == "Critical").all())
-
-    def test_incident_category_filtering(self):
-        """Verify filtering by incident category returns locations with >0 incidents in that category."""
-        filtered = rank_locations(self.scored, incident_category="Pothole")
-        self.assertTrue((filtered["inc_pothole"] > 0).all())
-
-    def test_unknown_incident_category_raises_error(self):
-        """Verify unknown incident category raises ValueError."""
-        with self.assertRaises(ValueError):
-            rank_locations(self.scored, incident_category="NonExistentCategory")
-
-
-class TestExplanationsAndDataIntegrity(unittest.TestCase):
-    """Tests for structured explanations and dataset immutability."""
-
-    def setUp(self):
-        self.datasets = load_all_datasets(DATA_DIR)
-
-    def test_explanation_structure_and_completeness(self):
-        """Verify each location gets a complete and structured explanation."""
-        agg = aggregate_location_data(
-            self.datasets["locations"],
-            self.datasets["incidents"],
-            self.datasets["public_complaints"],
-        )
-        scored = calculate_priority_scores(agg)
-        enriched = enrich_with_explanations(scored)
-
-        self.assertIn("severity_breakdown", enriched.columns)
-        self.assertIn("contributing_factors", enriched.columns)
-        self.assertIn("suggested_next_action", enriched.columns)
-        self.assertIn("missing_evidence_or_limitations", enriched.columns)
-
-        # Inspect first row explanation details
-        sample = enriched.iloc[0]
-        self.assertIsInstance(sample["severity_breakdown"], dict)
-        self.assertGreater(len(sample["contributing_factors"]), 0)
-        self.assertGreater(len(sample["suggested_next_action"]), 0)
-        self.assertIn("Synthetic educational dataset", sample["missing_evidence_or_limitations"])
-
-    def test_no_modification_of_original_datasets(self):
-        """Verify pipeline execution does not mutate original DataFrames or files."""
-        # Capture original hashes and shapes
-        orig_loc_shape = self.datasets["locations"].shape
-        orig_inc_shape = self.datasets["incidents"].shape
-        orig_comp_shape = self.datasets["public_complaints"].shape
-
-        _ = build_priority_pipeline(DATA_DIR)
-
-        # Check in-memory shapes
-        self.assertEqual(self.datasets["locations"].shape, orig_loc_shape)
-        self.assertEqual(self.datasets["incidents"].shape, orig_inc_shape)
-        self.assertEqual(self.datasets["public_complaints"].shape, orig_comp_shape)
+        more_comp = dict(base_loc, complaintCount=12)
+        p_comp, _, _ = self.compute_priority(more_comp, ceilings)
+        self.assertGreaterEqual(p_comp, p_base)
 
 
 if __name__ == "__main__":

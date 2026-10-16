@@ -1,435 +1,1387 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CityFix AI — City Intelligence Dashboard</title>
-  
-  <!-- Inter Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="description" content="Citidy — Smart City Civic Complaint Management Platform. Your City. Your Voice. Tracked to Resolution.">
+  <meta property="og:title" content="Citidy — Smart City Civic Complaint Management Platform">
+  <meta property="og:description" content="Empowering citizens to report civic problems with verified photographic proof and transparent resolution milestone tracking.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <title>Citidy | Smart City Civic Complaint Management Platform</title>
+  <link rel="stylesheet" href="styles.css?v=citidy-2026-v3">
 </head>
 <body>
-
-  <!-- Top Navigation Bar -->
-  <header class="top-nav">
-    <div class="nav-brand">
-      <div class="brand-badge">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-        </svg>
+  <!-- =========================================================================
+       GLOBAL APP HEADER & PORTAL SWITCHER
+       ========================================================================= -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="header-left">
+        <a class="header-brand" href="#citizen-complaints" aria-label="Citidy Home">
+          <span class="brand-emblem">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 18.5 9.5 6l4.4 9.2 2.2-4.3 3.9 7.6M4 18.5h16M9.5 6l2.6 5.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="11" r="2" fill="currentColor"/>
+            </svg>
+          </span>
+          <div class="brand-meta">
+            <span class="brand-title">Citidy <span class="brand-tag">CIVIC</span></span>
+            <span class="brand-tagline">Civic Operations Intelligence · Your City. Your Voice. Tracked to Resolution.</span>
+          </div>
+        </a>
       </div>
-      <div>
-        <div class="brand-title">CityFix AI</div>
-        <div class="brand-subtitle">Civic Intelligence Platform</div>
+
+      <!-- CENTRAL PORTAL SWITCHER -->
+      <nav class="portal-nav" aria-label="Portal mode switcher">
+        <button type="button" class="portal-switch active" id="btnSwitchCitizen" data-portal="citizen">
+          <span class="portal-switch-icon">👥</span>
+          <span class="portal-switch-text">Citizen Portal</span>
+        </button>
+        <button type="button" class="portal-switch" id="btnSwitchAdmin" data-portal="admin">
+          <span class="portal-switch-icon">🛡️</span>
+          <span class="portal-switch-text">Admin Operations</span>
+          <span class="admin-badge-role">Staff</span>
+        </button>
+      </nav>
+
+      <!-- TOPBAR USER ACTIONS & NOTIFICATIONS -->
+      <div class="header-right">
+        <!-- Notification Center Bell -->
+        <div class="notif-bell-wrap">
+          <button type="button" class="notif-bell-btn" id="notifBellBtn" aria-label="Open notifications" title="Civic Notifications">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+            </svg>
+            <span class="notif-badge" id="notifBadge" style="display: none;">0</span>
+          </button>
+        </div>
+
+        <!-- User Authentication Chip -->
+        <div class="user-chip-wrap" id="userChipWrap">
+          <button type="button" class="user-chip-btn" id="userChipBtn">
+            <span class="user-chip-avatar" id="userChipAvatar">👤</span>
+            <span class="user-chip-name" id="userChipName">Sign In / Register</span>
+            <span class="user-chip-arrow">▾</span>
+          </button>
+          <div class="user-dropdown" id="userDropdown" style="display: none;">
+            <div class="dropdown-header">
+              <strong id="dropdownUserTitle">Guest Visitor</strong>
+              <small id="dropdownUserEmail">Not authenticated</small>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-link" id="dropdownMyReports">📋 My Reported Complaints</button>
+            <button type="button" class="dropdown-link" id="dropdownNewReport">✍️ Report a Problem</button>
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-link text-danger" id="dropdownLogout">Log Out</button>
+          </div>
+        </div>
+
+        <span class="data-pill"><i></i> SYNTHETIC DATA</span>
+        <button id="methodButton" class="button-icon" aria-label="Open scoring method dialog" title="Scoring Methodology">?</button>
       </div>
-    </div>
-
-    <nav class="nav-links">
-      <a href="#section-dashboard" class="nav-link active">Dashboard</a>
-      <a href="#section-matrix" class="nav-link">Priority Matrix</a>
-      <a href="#section-evidence" class="nav-link">Evidence</a>
-      <a href="#section-map" class="nav-link">Map</a>
-      <a href="#section-analytics" class="nav-link">Analytics</a>
-      <a href="#section-ai" class="nav-link">AI Assistant</a>
-      <a href="#section-methodology" class="nav-link">Methodology</a>
-    </nav>
-
-    <div class="nav-actions">
-      <span class="badge-synthetic">
-        <span class="badge-dot"></span> Synthetic Educational Data
-      </span>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="app-layout" id="section-dashboard">
-    
-    <!-- Page Header -->
-    <section class="page-header">
-      <div>
-        <h1 class="page-title">City Intelligence Dashboard</h1>
-        <p class="page-subtitle">
-          Explainable civic infrastructure prioritization platform to triage repairs across 1,000 locations using incident history, citizen complaints, and spatial vulnerability indicators.
-        </p>
-      </div>
-      <div class="header-status">
-        <span class="status-pill">1,000 Locations Monitored</span>
-        <span class="status-pill">20 Municipal Zones</span>
-      </div>
-    </section>
-
-    <!-- 4 Compact KPI Cards -->
-    <section class="kpi-grid">
-      <!-- Total Locations -->
-      <div class="kpi-card">
-        <div class="kpi-header">
-          <span class="kpi-label">Total Locations</span>
-          <div class="kpi-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-          </div>
+  <!-- =========================================================================
+       EXPERIENCE 1: CITIZEN PORTAL
+       ========================================================================= -->
+  <div id="citizenPortal" class="portal-view active">
+    <!-- Citizen Portal Navigation Banner -->
+    <div class="citizen-subnav">
+      <div class="subnav-container">
+        <div class="citizen-tabs" role="tablist">
+          <button type="button" class="citizen-tab active" id="tabCitizenComplaints" role="tab" aria-selected="true">
+            <span class="tab-icon">📋</span> My Reported Complaints
+            <span class="tab-count-pill" id="myComplaintsCount">0</span>
+          </button>
+          <button type="button" class="citizen-tab" id="tabCitizenReport" role="tab" aria-selected="false">
+            <span class="tab-icon">➕</span> Report a Problem
+          </button>
+          <button type="button" class="citizen-tab" id="tabCitizenMap" role="tab" aria-selected="false">
+            <span class="tab-icon">🗺️</span> Public City Issue Map
+          </button>
         </div>
-        <div class="kpi-value" id="kpi-locations">1,000</div>
-        <div class="kpi-subtext">Across 20 municipal zones</div>
-      </div>
-
-      <!-- Total Incidents -->
-      <div class="kpi-card">
-        <div class="kpi-header">
-          <span class="kpi-label">Total Incidents</span>
-          <div class="kpi-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 2 22 22 22 12 2"></polygon>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-          </div>
+        <div class="citizen-quick-cta">
+          <button type="button" class="button button-primary" id="btnQuickReport">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12m-6-6h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Report an Issue Now
+          </button>
         </div>
-        <div class="kpi-value" id="kpi-incidents">10,000</div>
-        <div class="kpi-subtext">Recorded in 2025 (28.7% backlog)</div>
       </div>
+    </div>
 
-      <!-- Public Complaints -->
-      <div class="kpi-card">
-        <div class="kpi-header">
-          <span class="kpi-label">Public Complaints</span>
-          <div class="kpi-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-          </div>
-        </div>
-        <div class="kpi-value" id="kpi-complaints">8,000</div>
-        <div class="kpi-subtext">Citizen 311 service tickets</div>
-      </div>
-
-      <!-- Critical-Priority Locations -->
-      <div class="kpi-card kpi-card-critical">
-        <div class="kpi-header">
-          <span class="kpi-label">Critical-Priority Locations</span>
-          <div class="kpi-icon kpi-icon-critical">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-          </div>
-        </div>
-        <div class="kpi-value kpi-value-critical" id="kpi-critical-hotspots">53</div>
-        <div class="kpi-subtext">Score &ge; 50.0 (Immediate Inspection)</div>
-      </div>
-    </section>
-
-    <!-- MAIN TWO-COLUMN SPLIT: Matrix + Evidence Panel -->
-    <section class="main-split-grid" id="section-matrix">
-      
-      <!-- LEFT: Location Priority Matrix -->
-      <div class="panel-card matrix-panel">
-        <div class="panel-header">
+    <main class="citizen-main">
+      <!-- -------------------------------------------------------------------
+           CITIZEN VIEW A: MY REPORTED COMPLAINTS
+           ------------------------------------------------------------------- -->
+      <section id="sectionCitizenComplaints" class="citizen-section active">
+        <div class="section-title-bar">
           <div>
-            <h2 class="panel-title">Location Priority Matrix</h2>
-            <p class="panel-subtitle">Ranked locations by multi-pillar civic risk. Click any row to inspect full evidence.</p>
+            <h1>My Civic Complaints</h1>
+            <p class="section-subtitle">Track the progress of your submitted issues from initial verification to final photographic resolution.</p>
           </div>
-          <div class="panel-tag" id="filter-match-count">1,000 locations</div>
-        </div>
-
-        <!-- Filter Controls Bar -->
-        <div class="filter-bar">
-          <div class="filter-item filter-search">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="filter-search" class="form-input search-input" placeholder="Search location ID or zone...">
-          </div>
-
-          <div class="filter-item">
-            <select id="filter-zone" class="form-select">
-              <option value="">All Zones</option>
-            </select>
-          </div>
-
-          <div class="filter-item">
-            <select id="filter-tier" class="form-select">
-              <option value="">All Priorities</option>
-              <option value="Critical">Critical (&ge; 50)</option>
-              <option value="High">High (40 - 50)</option>
-              <option value="Medium">Medium (30 - 40)</option>
-              <option value="Low">Low (&lt; 30)</option>
-            </select>
-          </div>
-
-          <div class="filter-item">
-            <select id="filter-category" class="form-select">
-              <option value="">All Categories</option>
-              <option value="pothole">Potholes</option>
-              <option value="flooding">Flooding</option>
-              <option value="blocked_drain">Blocked Drains</option>
-              <option value="signal_failure">Signal Failures</option>
-              <option value="streetlight_outage">Streetlights</option>
-              <option value="collision">Collisions</option>
-            </select>
-          </div>
-
-          <div class="filter-item">
-            <button type="button" id="btn-reset-filters" class="btn btn-secondary">Reset</button>
+          <div class="filter-pills-bar">
+            <button type="button" class="filter-pill active" data-filter="all">All Complaints</button>
+            <button type="button" class="filter-pill" data-filter="active">In Progress / Active</button>
+            <button type="button" class="filter-pill" data-filter="resolved">Resolved</button>
+            <button type="button" class="filter-pill" data-filter="overdue">Overdue</button>
           </div>
         </div>
 
-        <!-- Table Container -->
-        <div class="table-wrapper">
-          <table class="matrix-table" id="priority-table">
-            <thead>
-              <tr>
-                <th style="width: 110px;">Location ID</th>
-                <th style="width: 100px;">Zone</th>
-                <th style="width: 120px;">Priority</th>
-                <th style="width: 100px;">Incidents</th>
-                <th style="width: 100px;">Complaints</th>
-                <th style="width: 110px;">Score</th>
-              </tr>
-            </thead>
-            <tbody id="priority-table-body">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <div class="pagination-bar">
-          <div class="pagination-text">
-            Showing <strong id="page-start">1</strong> to <strong id="page-end">25</strong> of <strong id="page-total">1,000</strong>
-          </div>
-          <div class="pagination-actions">
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page">&larr; Previous</button>
-            <span class="page-badge" id="page-indicator">Page 1</span>
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page">Next &rarr;</button>
+        <!-- Notice when logged out -->
+        <div id="citizenLoggedOutNotice" class="alert-card info" style="display: none;">
+          <div class="alert-icon">ℹ️</div>
+          <div class="alert-body">
+            <strong>Viewing demo mode as a guest</strong>
+            <p>Log in with a citizen account to track your submitted reports, receive real-time notifications, and view verified resolution photographs.</p>
+            <div class="alert-actions">
+              <button type="button" class="button button-sm button-primary" id="btnPromptCitizenLogin">Citizen Sign In</button>
+              <button type="button" class="button button-sm button-secondary" id="btnUseDemoCitizen">Demo Citizen (1-Click)</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- RIGHT: Selected Location Evidence Panel -->
-      <div class="panel-card evidence-panel" id="section-evidence">
-        <div class="panel-header">
+        <!-- Complaints Card Feed -->
+        <div class="complaints-feed" id="citizenComplaintsList">
+          <!-- Dynamically populated complaint cards with visual milestone progress bars -->
+          <div class="loading-spinner-wrap" id="citizenComplaintsLoading">
+            <div class="spinner"></div>
+            <span>Loading citizen complaints…</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- -------------------------------------------------------------------
+           CITIZEN VIEW B: REPORT A PROBLEM (SUBMISSION WIZARD)
+           ------------------------------------------------------------------- -->
+      <section id="sectionCitizenReport" class="citizen-section" style="display: none;">
+        <div class="report-wizard-card">
+          <div class="wizard-header">
+            <div class="wizard-step-tag">STEP-BY-STEP CIVIC REPORT</div>
+            <h2>Report a Problem in Your City</h2>
+            <p>Your report is directly assigned to municipal field response teams. Provide clear photos and an exact location to expedite repair.</p>
+          </div>
+
+          <form id="complaintForm" class="wizard-form" novalidate>
+            <!-- Step 1: Category Selection -->
+            <div class="form-group">
+              <label class="form-label">
+                <strong>1. Select Issue Category <span class="required">*</span></strong>
+                <small>Choose the municipal problem type</small>
+              </label>
+              <div class="category-selector-grid" id="categoryGrid">
+                <button type="button" class="cat-card active" data-category="Potholes and damaged roads">
+                  <span class="cat-icon">🕳️</span>
+                  <span class="cat-label">Potholes & Roads</span>
+                </button>
+                <button type="button" class="cat-card" data-category="Streetlight failures">
+                  <span class="cat-icon">💡</span>
+                  <span class="cat-label">Streetlights</span>
+                </button>
+                <button type="button" class="cat-card" data-category="Garbage accumulation">
+                  <span class="cat-icon">🗑️</span>
+                  <span class="cat-label">Garbage & Waste</span>
+                </button>
+                <button type="button" class="cat-card" data-category="Drainage and waterlogging">
+                  <span class="cat-icon">🌊</span>
+                  <span class="cat-label">Drainage & Flooding</span>
+                </button>
+                <button type="button" class="cat-card" data-category="Water supply problems">
+                  <span class="cat-icon">🚰</span>
+                  <span class="cat-label">Water Supply</span>
+                </button>
+                <button type="button" class="cat-card" data-category="Public infrastructure damage">
+                  <span class="cat-icon">🚧</span>
+                  <span class="cat-label">Public Infrastructure</span>
+                </button>
+                <button type="button" class="cat-card" data-category="Other civic issues">
+                  <span class="cat-icon">⚠️</span>
+                  <span class="cat-label">Other Civic Issue</span>
+                </button>
+              </div>
+              <input type="hidden" id="reportCategory" name="category" value="Potholes and damaged roads">
+            </div>
+
+            <!-- Step 2: Problem Photographs -->
+            <div class="form-group">
+              <label class="form-label" for="reportPhotoInput">
+                <strong>2. Upload Photograph of the Problem <span class="required">*</span></strong>
+                <small>Clear photo showing physical damage helps crews prepare equipment</small>
+              </label>
+              <div class="photo-upload-dropzone" id="photoDropzone">
+                <div class="dropzone-prompt" id="dropzonePrompt">
+                  <span class="dropzone-icon">📷</span>
+                  <strong>Drag & drop a problem photo, or <span class="browse-link">browse file</span></strong>
+                  <small>Supports JPG, PNG, WEBP, SVG (Max 15MB)</small>
+                </div>
+                <div class="dropzone-preview" id="dropzonePreview" style="display: none;">
+                  <img id="photoPreviewImg" alt="Problem photo preview">
+                  <div class="preview-meta">
+                    <span id="photoPreviewName">problem.jpg</span>
+                    <button type="button" class="button-remove-photo" id="btnRemovePhoto" aria-label="Remove photo">×</button>
+                  </div>
+                </div>
+                <input type="file" id="reportPhotoInput" accept="image/*" class="sr-only">
+              </div>
+            </div>
+
+            <!-- Step 3: Location Pinpoint -->
+            <div class="form-group">
+              <label class="form-label">
+                <strong>3. Pinpoint Exact Problem Location <span class="required">*</span></strong>
+                <small>Select municipal zone and click map to drop pin</small>
+              </label>
+              <div class="grid-2col">
+                <label class="field-label">
+                  <span>Zone</span>
+                  <select id="reportZone" class="input-select" required>
+                    <!-- Populated dynamically ZONE_01 to ZONE_20 -->
+                    <option value="ZONE_01">ZONE_01 — Central North</option>
+                    <option value="ZONE_02">ZONE_02 — Financial Core</option>
+                    <option value="ZONE_03">ZONE_03 — Waterfront West</option>
+                    <option value="ZONE_04">ZONE_04 — Riverside South</option>
+                    <option value="ZONE_05">ZONE_05 — Highland Park</option>
+                    <option value="ZONE_06">ZONE_06 — University Corridor</option>
+                    <option value="ZONE_07">ZONE_07 — East Industrial</option>
+                    <option value="ZONE_08">ZONE_08 — Transit Commons</option>
+                    <option value="ZONE_09">ZONE_09 — Tech Campus</option>
+                    <option value="ZONE_10">ZONE_10 — Heritage District</option>
+                    <option value="ZONE_11">ZONE_11 — North Suburbs</option>
+                    <option value="ZONE_12">ZONE_12 — Commerce Center</option>
+                    <option value="ZONE_13">ZONE_13 — South Ridge</option>
+                    <option value="ZONE_14">ZONE_14 — Harbour Gateway</option>
+                    <option value="ZONE_15">ZONE_15 — Green Valley</option>
+                    <option value="ZONE_16">ZONE_16 — West Valley</option>
+                    <option value="ZONE_17">ZONE_17 — Airport Logistics</option>
+                    <option value="ZONE_18">ZONE_18 — Coastal Hills</option>
+                    <option value="ZONE_19">ZONE_19 — East Commons</option>
+                    <option value="ZONE_20">ZONE_20 — Valley Junction</option>
+                  </select>
+                </label>
+
+                <label class="field-label">
+                  <span>Street Address or Landmark</span>
+                  <input type="text" id="reportAddress" class="input-text" placeholder="e.g. 450 Oak St near Elm Crosswalk" required>
+                </label>
+              </div>
+
+              <!-- Interactive Location Picker Map -->
+              <div class="interactive-picker-map" id="pickerMapStage">
+                <div class="picker-map-canvas" id="pickerMapCanvas">
+                  <div class="picker-pin-crosshair" id="pickerPinCrosshair">📍</div>
+                  <div class="picker-map-overlay">
+                    <span>Click anywhere on the map area to position the issue pin</span>
+                    <strong id="pickerCoordsLabel">Latitude: 37.7749 · Longitude: -122.4194</strong>
+                  </div>
+                </div>
+                <input type="hidden" id="reportLat" value="37.7749">
+                <input type="hidden" id="reportLon" value="-122.4194">
+              </div>
+            </div>
+
+            <!-- Step 4: Title, Description & Priority -->
+            <div class="form-group">
+              <label class="form-label" for="reportTitle">
+                <strong>4. Problem Title & Details <span class="required">*</span></strong>
+                <small>Summarize the issue clearly for field engineers</small>
+              </label>
+
+              <div class="field-label mb-3">
+                <span>Summary Headline</span>
+                <input type="text" id="reportTitle" class="input-text" placeholder="e.g. Deep pothole causing tire damage near school bus stop" required>
+              </div>
+
+              <div class="field-label mb-3">
+                <span>Detailed Description</span>
+                <textarea id="reportDescription" class="input-textarea" rows="4" placeholder="Describe the severity, hazard, how long it has been present, and any relevant safety hazards…" required></textarea>
+              </div>
+
+              <div class="grid-2col">
+                <label class="field-label">
+                  <span>Perceived Urgency / Priority</span>
+                  <select id="reportPriority" class="input-select">
+                    <option value="Low">Low — Routine maintenance (10-day target)</option>
+                    <option value="Medium" selected>Medium — Standard repair (5-day target)</option>
+                    <option value="High">High — Urgent hazard (3-day target)</option>
+                    <option value="Critical">Critical — Immediate safety risk (24-hour target)</option>
+                  </select>
+                </label>
+                <div class="sla-info-box">
+                  <span class="sla-icon">⏱️</span>
+                  <div>
+                    <strong>SLA Resolution Target</strong>
+                    <p id="slaNotice">Standard civic issues are targeted for completion within 5 business days upon administrative verification.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit CTA -->
+            <div class="wizard-actions">
+              <button type="submit" class="button button-lg button-primary" id="btnSubmitComplaint">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 10 17.5 3l-4 14-4-5.5L2.5 10z" fill="currentColor"/></svg>
+                Submit Civic Complaint
+              </button>
+            </div>
+          </form>
+
+          <!-- Success Card shown upon submission -->
+          <div id="reportSuccessCard" class="report-success-card" style="display: none;">
+            <div class="success-icon-badge">✓</div>
+            <h3>Complaint Submitted Successfully!</h3>
+            <p>Your issue has been recorded in the Citidy municipal database and assigned to the review queue.</p>
+            <div class="success-details-box">
+              <div class="success-row">
+                <span>Tracking ID:</span>
+                <strong class="success-id" id="successComplaintId">CTD-2026-00000</strong>
+              </div>
+              <div class="success-row">
+                <span>Initial Target Resolution:</span>
+                <strong id="successTargetDate">—</strong>
+              </div>
+              <div class="success-row">
+                <span>Status:</span>
+                <span class="status-pill status-submitted">Submitted</span>
+              </div>
+            </div>
+            <div class="success-actions">
+              <button type="button" class="button button-primary" id="btnTrackNewComplaint">Track Progress in My Complaints</button>
+              <button type="button" class="button button-secondary" id="btnSubmitAnother">Report Another Issue</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- -------------------------------------------------------------------
+           CITIZEN VIEW C: PUBLIC CITY ISSUE MAP
+           ------------------------------------------------------------------- -->
+      <section id="sectionCitizenMap" class="citizen-section" style="display: none;">
+        <div class="section-title-bar">
           <div>
-            <h2 class="panel-title">Selected Location Evidence</h2>
-            <p class="panel-subtitle">Transparent justification and municipal triage recommendation.</p>
-          </div>
-          <select id="evidence-location-select" class="form-select form-select-sm" style="max-width: 160px;">
-            <!-- Populated dynamically -->
-          </select>
-        </div>
-
-        <div class="evidence-body" id="evidence-content">
-          <!-- Dynamically populated by app.js -->
-        </div>
-      </div>
-
-    </section>
-
-    <!-- TWO-COLUMN SECTION: Analytics & Map -->
-    <section class="analytics-map-grid" id="section-analytics">
-      
-      <!-- Incident & Complaint Analytics -->
-      <div class="panel-card">
-        <div class="panel-header">
-          <div>
-            <h2 class="panel-title">Incident Analytics &amp; Distributions</h2>
-            <p class="panel-subtitle">Citywide distributions across 10,000 incidents and 8,000 complaints.</p>
-          </div>
-        </div>
-
-        <div class="analytics-charts-grid">
-          <!-- Priority Tiers -->
-          <div class="sub-chart-box">
-            <h3 class="sub-chart-title">Priority Tier Distribution (1,000 Locations)</h3>
-            <div class="chart-bars" id="chart-tiers"></div>
-          </div>
-
-          <!-- Incident Severity -->
-          <div class="sub-chart-box">
-            <h3 class="sub-chart-title">Incident Severity Breakdown (10,000 Incidents)</h3>
-            <div class="chart-bars" id="chart-severity"></div>
-          </div>
-
-          <!-- Incident Categories -->
-          <div class="sub-chart-box">
-            <h3 class="sub-chart-title">Top Incident Types (Field Reports)</h3>
-            <div class="chart-bars" id="chart-inc-categories"></div>
-          </div>
-
-          <!-- Complaint Categories -->
-          <div class="sub-chart-box">
-            <h3 class="sub-chart-title">Public Complaint Categories (Citizen 311)</h3>
-            <div class="chart-bars" id="chart-comp-categories"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Interactive Map Card -->
-      <div class="panel-card" id="section-map">
-        <div class="panel-header">
-          <div>
-            <h2 class="panel-title">Infrastructure Triage Map</h2>
-            <p class="panel-subtitle">Geographic risk distribution across Greater Metro (16.45&deg; N, 80.50&deg; E)</p>
+            <h1>Public City Issue Map</h1>
+            <p class="section-subtitle">Real-time spatial visualization of civic issues across all 20 municipal zones.</p>
           </div>
           <div class="map-legend">
-            <span class="legend-badge legend-critical">&bull; Critical (&ge; 50)</span>
-            <span class="legend-badge legend-high">&bull; High (40 - 50)</span>
-            <span class="legend-badge legend-medium">&bull; Medium (30 - 40)</span>
-            <span class="legend-badge legend-low">&bull; Low (&lt; 30)</span>
+            <span class="legend-item"><span class="legend-dot dot-blue"></span> Submitted</span>
+            <span class="legend-item"><span class="legend-dot dot-amber"></span> In Progress</span>
+            <span class="legend-item"><span class="legend-dot dot-green"></span> Resolved</span>
+            <span class="legend-item"><span class="legend-dot dot-red"></span> Critical / Overdue</span>
           </div>
         </div>
 
-        <div class="map-container-box">
-          <div id="city-map"></div>
-          <div class="map-disclaimer">
-            <span>&bull;</span> Coordinates and records are synthetic for educational datathon evaluation.
+        <div class="public-map-wrapper card">
+          <div class="public-map-stage" id="publicMapCanvas">
+            <!-- Simulated interactive city map with complaint pins -->
+            <div class="map-pins-overlay" id="publicMapPinsContainer"></div>
+            <div class="map-watermark">CITIDY SPATIAL MONITOR · ALL 20 ZONES</div>
+          </div>
+          <div class="public-map-footer">
+            <span id="publicMapStats">Loaded 0 civic complaint pins. Click any pin to inspect photographic evidence.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- =========================================================================
+       EXPERIENCE 2: ADMIN OPERATIONS PORTAL (PROTECTED)
+       ========================================================================= -->
+  <div id="adminPortal" class="portal-view" style="display: none;">
+    <!-- ADMIN AUTHENTICATION GUARD (If not logged in as admin) -->
+    <div id="adminAuthGuard" class="admin-auth-guard" style="display: none;">
+      <div class="auth-guard-card card">
+        <div class="guard-icon">🛡️</div>
+        <h2>Citidy Municipal Admin Authorization</h2>
+        <p>Access to complaint triage, staff assignment, SLA target revisions, and resolution verification requires municipal credentials. Citizens cannot access this area.</p>
+        <form id="adminLoginForm" class="guard-form">
+          <label class="field-label">
+            <span>Staff Email</span>
+            <input type="email" id="adminLoginEmail" class="input-text" value="admin@citidy.gov" required>
+          </label>
+          <label class="field-label">
+            <span>Password</span>
+            <input type="password" id="adminLoginPassword" class="input-text" value="CitidyAdmin2026!" required>
+          </label>
+          <button type="submit" class="button button-primary button-block" id="btnAdminLoginSubmit">Authorize Administrative Access</button>
+        </form>
+        <div class="guard-demo-note">
+          <small>Pre-seeded demo administrator credentials loaded for DATATHON 2026 evaluation.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN OPERATIONS WORKSPACE (Rendered when authenticated as admin) -->
+    <div id="adminWorkspace" class="admin-workspace">
+      <!-- Admin Topbar & Subnav -->
+      <div class="admin-subnav">
+        <div class="subnav-container">
+          <div class="admin-tabs" role="tablist">
+            <button type="button" class="admin-tab active" id="tabAdminTriage" role="tab">
+              <span class="tab-icon">📥</span> Complaints Triage
+              <span class="tab-count-pill" id="adminTriageCount">0</span>
+            </button>
+            <button type="button" class="admin-tab" id="tabAdminQueue" role="tab">
+              <span class="tab-icon">⚖️</span> Municipal Priority Queue
+            </button>
+            <button type="button" class="admin-tab" id="tabAdminAnalytics" role="tab">
+              <span class="tab-icon">📊</span> Signals, Trends & ML
+            </button>
+            <button type="button" class="admin-tab" id="tabAdminLimitations" role="tab">
+              <span class="tab-icon">ⓘ</span> Governance & Transparency
+            </button>
+          </div>
+          <div class="admin-user-pill">
+            <span class="admin-active-dot"></span>
+            <span>Authorized: <strong id="adminStaffName">Municipal Administrator</strong></span>
           </div>
         </div>
       </div>
 
-    </section>
-
-    <!-- AI CITY INTELLIGENCE ASSISTANT -->
-    <section class="panel-card ai-assistant-panel" id="section-ai">
-      <div class="panel-header">
-        <div class="ai-header-content">
-          <div class="ai-icon-badge">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M12 16v-4"></path>
-              <path d="M12 8h.01"></path>
-            </svg>
+      <!-- KPI METRIC RIBBON (Server-calculated with strict completed duration cleaning) -->
+      <section class="admin-kpi-ribbon">
+        <div class="kpi-ribbon-container">
+          <div class="kpi-card">
+            <span class="kpi-label">Total Complaints</span>
+            <strong class="kpi-value" id="kpiAdminTotal">—</strong>
+            <small class="kpi-hint">All recorded citizen cases</small>
           </div>
-          <div>
-            <h2 class="panel-title">AI City Intelligence Assistant</h2>
-            <p class="panel-subtitle">
-              Ask natural-language questions to analyze civic priority hotspots and infrastructure backlogs deterministically.
+          <div class="kpi-card">
+            <span class="kpi-label">Under Review / New</span>
+            <strong class="kpi-value text-blue" id="kpiAdminSubmitted">—</strong>
+            <small class="kpi-hint">Awaiting triage & assignment</small>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Active Work in Progress</span>
+            <strong class="kpi-value text-amber" id="kpiAdminInProgress">—</strong>
+            <small class="kpi-hint">Assigned to field crews</small>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Verified Resolved</span>
+            <strong class="kpi-value text-green" id="kpiAdminResolved">—</strong>
+            <small class="kpi-hint">Completed with verified after photos</small>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Overdue Cases</span>
+            <strong class="kpi-value text-danger" id="kpiAdminOverdue">—</strong>
+            <small class="kpi-hint">Past target resolution date</small>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Avg Turnaround Time</span>
+            <strong class="kpi-value" id="kpiAdminAvgDuration">—</strong>
+            <small class="kpi-hint">Strictly on completed cases</small>
+          </div>
+        </div>
+      </section>
+
+      <!-- -------------------------------------------------------------------
+           ADMIN VIEW A: COMPLAINTS TRIAGE & ACTIONS
+           ------------------------------------------------------------------- -->
+      <section id="sectionAdminTriage" class="admin-section active">
+        <div class="triage-header card">
+          <div class="triage-title-wrap">
+            <h2>Civic Complaints Triage Queue</h2>
+            <p>Verify citizen issues, assign to municipal departments, track milestone completion, and upload verified resolution photographic evidence.</p>
+          </div>
+          <div class="triage-filter-grid">
+            <label class="filter-control search-control">
+              <span>Search Complaint</span>
+              <div class="control-wrap">
+                <span class="search-glyph">⌕</span>
+                <input id="adminSearchInput" type="search" placeholder="Search by ID, title, citizen, or address…" autocomplete="off">
+              </div>
+            </label>
+
+            <label class="filter-control">
+              <span>Status</span>
+              <div class="control-wrap">
+                <select id="adminStatusFilter">
+                  <option value="all">All Statuses</option>
+                  <option value="Submitted">Submitted (0%)</option>
+                  <option value="Under Review">Under Review (10%)</option>
+                  <option value="Verified">Verified (20%)</option>
+                  <option value="Assigned">Assigned (30%)</option>
+                  <option value="In Progress">In Progress (50%)</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Resolved">Resolved (100%)</option>
+                  <option value="Reopened">Reopened</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+                <b class="caret"></b>
+              </div>
+            </label>
+
+            <label class="filter-control">
+              <span>Zone</span>
+              <div class="control-wrap">
+                <select id="adminZoneFilter">
+                  <option value="all">All 20 Zones</option>
+                  <!-- Populated ZONE_01 to ZONE_20 -->
+                </select>
+                <b class="caret"></b>
+              </div>
+            </label>
+
+            <label class="filter-control">
+              <span>Category</span>
+              <div class="control-wrap">
+                <select id="adminCategoryFilter">
+                  <option value="all">All Categories</option>
+                  <option value="Potholes and damaged roads">Potholes and damaged roads</option>
+                  <option value="Streetlight failures">Streetlight failures</option>
+                  <option value="Garbage accumulation">Garbage accumulation</option>
+                  <option value="Drainage and waterlogging">Drainage and waterlogging</option>
+                  <option value="Water supply problems">Water supply problems</option>
+                  <option value="Public infrastructure damage">Public infrastructure damage</option>
+                  <option value="Other civic issues">Other civic issues</option>
+                </select>
+                <b class="caret"></b>
+              </div>
+            </label>
+
+            <div class="filter-control reset-control">
+              <span>&nbsp;</span>
+              <button class="button button-secondary" id="btnAdminRefresh" type="button">↻ Refresh Queue</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Triage Data Table -->
+        <div class="triage-table-card card">
+          <div class="table-responsive">
+            <table class="triage-table" id="adminTriageTable">
+              <thead>
+                <tr>
+                  <th>Tracking ID</th>
+                  <th>Photo</th>
+                  <th>Category & Title</th>
+                  <th>Location & Zone</th>
+                  <th>Priority</th>
+                  <th>Status & Progress</th>
+                  <th>Target Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminTriageRows">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- -------------------------------------------------------------------
+           ADMIN VIEW B: MUNICIPAL PRIORITY QUEUE (PRESERVED CITYFIX AI)
+           ------------------------------------------------------------------- -->
+      <section id="sectionAdminQueue" class="admin-section" style="display: none;">
+        <!-- HERO SECTION -->
+        <section class="hero" id="overview">
+          <div class="hero-left">
+            <div class="eyebrow">
+              <span class="eyebrow-line"></span>
+              DATATHON 2026 · TRACK 3: SMART CITY
+            </div>
+            <h1>Where should we fix first?</h1>
+            <p class="hero-copy">
+              A transparent, evidence-first review engine that ranks municipal repair priority by synthesizing 
+              incident logs, citizen complaints, and street risk context — helping limited inspection crews act where needed most.
             </p>
           </div>
-        </div>
-      </div>
+          <div class="hero-actions">
+            <button id="exportActions" class="button button-secondary" type="button">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8v9.4m0 0 3.4-3.4M10 12.2 6.6 8.8M3.5 12.8v3.7h13v-3.7"/></svg>
+              Export Decision Log
+            </button>
+            <button id="exportTop" class="button button-primary" type="button">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8v9.4m0 0 3.4-3.4M10 12.2 6.6 8.8M3.5 12.8v3.7h13v-3.7"/></svg>
+              Export Priority Queue
+            </button>
+          </div>
+        </section>
 
-      <!-- Example Queries -->
-      <div class="ai-suggestions">
-        <span class="suggestion-label">Suggested Queries:</span>
-        <button type="button" class="query-chip" onclick="runAiQuery('Which locations have the highest priority?')">Top 5 Priority Hotspots</button>
-        <button type="button" class="query-chip" onclick="runAiQuery('Why is L0965 ranked highly?')">Why is L0965 Ranked #1?</button>
-        <button type="button" class="query-chip" onclick="runAiQuery('Which locations have recurring unresolved incidents?')">Worst Unresolved Backlogs</button>
-        <button type="button" class="query-chip" onclick="runAiQuery('Where are recurring drainage and flooding issues concentrated?')">Drainage &amp; Floods</button>
-        <button type="button" class="query-chip" onclick="runAiQuery('Which locations near schools or hospitals have poor roads?')">Vulnerable School/Hospital Corridors</button>
-      </div>
+        <!-- EXPLORATION CONTROLS -->
+        <section class="filters card" aria-label="Exploration and filters">
+          <div class="filters-header">
+            <div class="filters-title">
+              <span class="filter-icon">⌕</span>
+              <div>
+                <strong>Explore & Filter</strong>
+                <small>Segment the municipal review queue</small>
+              </div>
+            </div>
+            <div class="filter-status-badge">
+              <strong id="matchingCount">1,000</strong> locations matching
+            </div>
+          </div>
 
-      <!-- Query Input Bar -->
-      <div class="ai-input-wrapper">
-        <input type="text" id="ai-query-input" class="form-input ai-input" placeholder="Ask a question or enter a location ID (e.g., 'Why is L0965 high?', 'Flooding near schools')...">
-        <button type="button" id="btn-run-ai" class="btn btn-primary">Ask</button>
-      </div>
+          <div class="filters-grid">
+            <label class="filter-control search-control">
+              <span>Search Location</span>
+              <div class="control-wrap">
+                <span class="search-glyph">⌕</span>
+                <input id="searchInput" type="search" placeholder="Search by ID (e.g. L0042) or street…" autocomplete="off">
+              </div>
+            </label>
 
-      <!-- AI Results Display -->
-      <div class="ai-results-card" id="ai-result-container">
-        <div class="ai-result-header" id="ai-result-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <span>Intelligence Analysis Result</span>
-        </div>
-        <div class="ai-result-text" id="ai-result-text">
-          Select one of the query suggestions above or type an investigation prompt to analyze civic priorities across the 1,000 city locations.
-        </div>
-        <div id="ai-result-extra"></div>
-        <div class="ai-matched-grid" id="ai-matched-container"></div>
-      </div>
-    </section>
+            <label class="filter-control">
+              <span>Zone</span>
+              <div class="control-wrap">
+                <select id="zoneFilter" aria-label="Filter by zone">
+                  <option value="all">All 20 Zones</option>
+                </select>
+                <b class="caret"></b>
+              </div>
+            </label>
 
-    <!-- METHODOLOGY & DATA CONSTRAINTS -->
-    <section class="panel-card methodology-panel" id="section-methodology">
-      <div class="panel-header">
+            <label class="filter-control">
+              <span>Incident Category</span>
+              <div class="control-wrap">
+                <select id="issueFilter" aria-label="Filter by incident category">
+                  <option value="all">All Incident Categories</option>
+                </select>
+                <b class="caret"></b>
+              </div>
+            </label>
+
+            <label class="filter-control">
+              <span>Severity Level</span>
+              <div class="control-wrap">
+                <select id="severityFilter" aria-label="Filter by severity level">
+                  <option value="all">All Severities</option>
+                  <option value="Critical">Critical Severity</option>
+                  <option value="High">High Severity</option>
+                  <option value="Medium">Medium Severity</option>
+                  <option value="Low">Low Severity</option>
+                </select>
+                <b class="caret"></b>
+              </div>
+            </label>
+
+            <div class="filter-control reset-control">
+              <span>&nbsp;</span>
+              <button class="button button-reset" id="resetFilters" type="button">Reset Filters</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- KPI SUMMARY CARDS -->
+        <section class="metric-grid" aria-label="Dataset summary indicators">
+          <article class="metric-card">
+            <div class="metric-top">
+              <span>Locations in View</span>
+              <span class="metric-symbol blue">⌖</span>
+            </div>
+            <div class="metric-number" id="metricLocations">—</div>
+            <div class="metric-foot">
+              <span class="foot-dot blue"></span>
+              <span id="metricLocationShare">100% of municipal locations</span>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-top">
+              <span>Recorded Incidents</span>
+              <span class="metric-symbol amber">↗</span>
+            </div>
+            <div class="metric-number" id="metricIncidents">—</div>
+            <div class="metric-foot">
+              <span class="foot-dot amber"></span>
+              <span id="metricIncidentDetails">—</span>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-top">
+              <span>Public Complaints</span>
+              <span class="metric-symbol purple">☷</span>
+            </div>
+            <div class="metric-number" id="metricComplaints">—</div>
+            <div class="metric-foot">
+              <span class="foot-dot purple"></span>
+              <span id="metricComplaintDetails">—</span>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-top">
+              <span>Open Work Items</span>
+              <span class="metric-symbol red">◷</span>
+            </div>
+            <div class="metric-number" id="metricOpen">—</div>
+            <div class="metric-foot">
+              <span class="foot-dot red"></span>
+              <span id="metricOpenDetails">unresolved incidents + active complaints</span>
+            </div>
+          </article>
+        </section>
+
+        <!-- OVERVIEW GRID: MAP & ASSISTANT -->
+        <section class="overview-grid">
+          <!-- MAP COMPONENT -->
+          <article class="card map-card">
+            <div class="section-heading map-heading">
+              <div>
+                <div class="section-kicker">SPATIAL EVIDENCE <span class="tiny-separator">·</span> <span id="mapScope">ALL ZONES</span></div>
+                <h2>Selected Location Map</h2>
+                <p class="section-subtitle">Centered on the selected priority location. Pin updates with selection.</p>
+              </div>
+              <span class="map-badge"><span class="badge-dot"></span> Street View</span>
+            </div>
+
+            <div class="map-stage">
+              <iframe id="locationMap" title="Street map centered on the selected CityFix location" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+              <div id="mapFallback" class="map-fallback" style="display: none;">
+                <div class="fallback-icon">🗺️</div>
+                <strong>Interactive Map Offline</strong>
+                <p>Coordinates: <span id="fallbackCoords">—</span></p>
+                <a id="fallbackMapsLink" class="button button-secondary" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer">
+                  Open External Google Maps ↗
+                </a>
+              </div>
+              <div id="mapLocationLabel" class="map-location-label">SIMULATED DATA POINT</div>
+            </div>
+
+            <div class="map-footer">
+              <div class="map-coordinate" id="mapCoordinates">Select a location from the queue below to inspect its map position.</div>
+              <a id="googleMapsLink" class="google-map-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer">
+                Open in Google Maps <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+            <p class="map-disclaimer" id="mapDisclaimer">
+              <strong>Simulated Data Notice:</strong> All dataset coordinates are simulated demo positions within a local bounding box. Never use simulated coordinates for physical emergency dispatch.
+            </p>
+          </article>
+
+          <!-- ASSISTANT COMPONENT -->
+          <article class="card briefing-card">
+            <div class="assistant-top">
+              <div class="assistant-avatar">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4"/>
+                  <circle cx="12" cy="12" r="4.2"/>
+                </svg>
+              </div>
+              <div>
+                <div class="section-kicker">CITIDY OPERATIONS ASSISTANT</div>
+                <div class="assistant-label">Evidence Briefing <span class="live-dot"></span></div>
+              </div>
+              <span class="assist-badge">DATA-GROUNDED</span>
+            </div>
+
+            <div class="briefing-body">
+              <div class="briefing-label">CURRENT SCOPE EVIDENCE</div>
+              <p id="briefingText" role="status" aria-live="polite">Loading evidence summary…</p>
+            </div>
+
+            <div class="assistant-explore">
+              <div class="assistant-form-wrap">
+                <form class="ask-form" id="assistantForm">
+                  <label class="sr-only" for="assistantInput">Ask Citidy about municipal records</label>
+                  <input id="assistantInput" type="text" placeholder="Ask about severity, zones, complaints, ML forecast…" autocomplete="off">
+                  <button type="submit" aria-label="Ask Citidy query">Ask <span>↗</span></button>
+                </form>
+                <div class="ask-suggestions" aria-label="Suggested questions">
+                  <button type="button" data-question="Which locations have the highest priority index?">Top Priority</button>
+                  <button type="button" data-question="Which zone has the most recorded incidents?">Top Zone</button>
+                  <button type="button" data-question="Which locations have the most unresolved incidents?">Open Backlog</button>
+                  <button type="button" data-question="How many complaints are open?">Open Complaints</button>
+                  <button type="button" data-question="What are the most frequently reported incident categories?">Categories</button>
+                  <button type="button" data-question="Which locations have the highest average severity?">High Severity</button>
+                  <button type="button" data-question="Which locations have the highest model-predicted incident counts?">ML Forecast</button>
+                  <button type="button" data-question="How does the model compare with the baseline?">Model vs Baseline</button>
+                </div>
+              </div>
+
+              <!-- Structured Answer Output Box -->
+              <div id="assistantResponse" class="assistant-response" style="display: none;" aria-live="polite">
+                <div class="response-header">
+                  <span class="response-badge">COMPUTED ANSWER</span>
+                  <button type="button" id="closeAssistantResponse" class="response-close" aria-label="Close answer">×</button>
+                </div>
+                <div id="assistantResponseContent" class="response-content"></div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- PRIORITY QUEUE SECTION -->
+        <section class="queue-section" id="queue">
+          <div class="section-heading queue-heading">
+            <div>
+              <div class="section-kicker">MUNICIPAL DISPATCH QUEUE</div>
+              <h2>Where should we fix first? — Priority Ranked Locations</h2>
+              <p class="section-subtitle">Locations ranked by the auditable 5-factor priority formula. Click any row to inspect historical incident evidence and record decisions.</p>
+            </div>
+            <div class="queue-status-pill">
+              <span class="pulse-indicator"></span> 5-Factor Analytical Formula
+            </div>
+          </div>
+
+          <div class="queue-grid">
+            <!-- QUEUE TABLE CARD -->
+            <article class="card table-card">
+              <div class="table-wrap" tabindex="0" role="region" aria-label="Priority locations table">
+                <table class="queue-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="sortable" data-sort="id">Location <span class="sort-icon">↕</span></th>
+                      <th scope="col" class="sortable" data-sort="zone">Zone <span class="sort-icon">↕</span></th>
+                      <th scope="col" class="sortable" data-sort="priority">Priority <span class="sort-icon">↕</span></th>
+                      <th scope="col" class="sortable" data-sort="incidents">Incidents <span class="sort-icon">↕</span></th>
+                      <th scope="col" class="sortable" data-sort="severity">Avg Sev <span class="sort-icon">↕</span></th>
+                      <th scope="col" class="sortable" data-sort="complaints">Complaints <span class="sort-icon">↕</span></th>
+                      <th scope="col" class="sortable" data-sort="backlog">Backlog <span class="sort-icon">↕</span></th>
+                      <th scope="col">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="queueRows"></tbody>
+                </table>
+              </div>
+              <div class="table-pagination">
+                <span id="queuePageInfo">Showing 1–10 of 1,000 locations</span>
+                <div class="pagination-controls">
+                  <button class="button button-sm button-secondary" id="prevPage" type="button" disabled>← Previous</button>
+                  <button class="button button-sm button-secondary" id="nextPage" type="button">Next →</button>
+                </div>
+              </div>
+            </article>
+
+            <!-- SELECTED LOCATION DETAIL CARD -->
+            <article class="card detail-card" id="detailCard">
+              <div class="detail-header">
+                <div>
+                  <div class="section-kicker">SELECTED LOCATION CONTEXT</div>
+                  <h3 id="detailLocationId">L0001</h3>
+                  <p class="detail-address" id="detailAddress">—</p>
+                </div>
+                <div class="priority-badge-big">
+                  <span class="priority-label">PRIORITY</span>
+                  <strong class="priority-val" id="detailPriority">0</strong>
+                </div>
+              </div>
+
+              <div class="detail-breakdown">
+                <h4>Priority Factor Breakdown</h4>
+                <div class="factor-breakdown-list" id="detailFactorBars"></div>
+              </div>
+
+              <div class="detail-reasons">
+                <h4>Operational Signals</h4>
+                <ul class="signal-list" id="detailReasons"></ul>
+              </div>
+
+              <div class="detail-decision-box">
+                <h4>Record Municipal Review Decision</h4>
+                <div class="decision-inputs">
+                  <select id="decisionSelect" class="decision-select" aria-label="Review decision status">
+                    <option value="pending">Pending Review</option>
+                    <option value="inspect">Scheduled for On-site Inspection</option>
+                    <option value="dispatch">Work Order Dispatched</option>
+                    <option value="resolved">Maintenance Verified / Completed</option>
+                  </select>
+                  <textarea id="decisionNotes" class="decision-notes" rows="2" placeholder="Inspection notes, crew ID, or dispatch reference…"></textarea>
+                  <button class="button button-primary button-sm" id="saveDecision" type="button">Save Decision</button>
+                </div>
+                <div id="decisionStatusMessage" class="decision-status" style="display: none;"></div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <!-- -------------------------------------------------------------------
+           ADMIN VIEW C: SIGNALS, TRENDS & ML FORECAST
+           ------------------------------------------------------------------- -->
+      <section id="sectionAdminAnalytics" class="admin-section" style="display: none;">
+        <!-- ML FORECAST BENCHMARK -->
+        <section class="forecast-section" id="forecast">
+          <div class="section-heading">
+            <div>
+              <div class="section-kicker">EXPERIMENTAL SIGNAL</div>
+              <h2>Machine Learning Incident Forecast (Random Forest vs Baseline)</h2>
+              <p class="section-subtitle">Evaluating forward-looking incident prediction against real holdout data.</p>
+            </div>
+          </div>
+
+          <div class="forecast-grid">
+            <article class="card forecast-metric-card">
+              <div class="f-head">
+                <span>Holdout MAE</span>
+                <span class="f-badge">Q4 TEST SET</span>
+              </div>
+              <div class="f-number" id="modelMae">1.260</div>
+              <p class="f-desc">Mean Absolute Error across 250 holdout locations</p>
+            </article>
+
+            <article class="card forecast-metric-card">
+              <div class="f-head">
+                <span>Mean Baseline MAE</span>
+                <span class="f-badge secondary">REFERENCE</span>
+              </div>
+              <div class="f-number" id="baselineMae">1.255</div>
+              <p class="f-desc">Baseline predicting the historical mean incident rate</p>
+            </article>
+
+            <article class="card forecast-metric-card">
+              <div class="f-head">
+                <span>Historical Q-Avg MAE</span>
+                <span class="f-badge secondary">HEURISTIC</span>
+              </div>
+              <div class="f-number">1.382</div>
+              <p class="f-desc">Simple quarterly rolling average benchmark</p>
+            </article>
+          </div>
+
+          <article class="card forecast-insight-card">
+            <h3>Machine Learning Scientific Findings & Limitations</h3>
+            <p>
+              In our rigorous 75/25 holdout evaluation on DATATHON 2026 data, the 36-tree Random Forest achieves an MAE of <strong>1.260</strong>, 
+              which is essentially at parity with the Mean Baseline (<strong>1.255</strong>). This occurs because synthetic quarterly incident counts 
+              are generated via a memoryless Poisson process with low location-specific autocorrelation. 
+              <strong>Operational Recommendation:</strong> Municipal dispatch decisions should rely on the transparent, auditable 5-Factor Priority Heuristic, 
+              using the ML regressor strictly as an auxiliary signal.
+            </p>
+          </article>
+        </section>
+
+        <!-- SIGNALS & TRENDS -->
+        <section class="signals-section" id="signals">
+          <div class="section-heading">
+            <div>
+              <div class="section-kicker">OPERATIONAL PATTERNS</div>
+              <h2>Signals & Trends — Zone Distribution</h2>
+              <p class="section-subtitle">Distribution of incidents and citizen complaints across the 20 municipal zones.</p>
+            </div>
+          </div>
+
+          <div class="signals-grid">
+            <article class="card zone-leaders-card">
+              <h3>Zone Incident & Complaint Breakdown</h3>
+              <div class="table-responsive">
+                <table class="simple-table" id="zoneLeadersTable">
+                  <thead>
+                    <tr>
+                      <th>Zone</th>
+                      <th>Locations</th>
+                      <th>Incidents</th>
+                      <th>Complaints</th>
+                      <th>Open Backlog</th>
+                    </tr>
+                  </thead>
+                  <tbody id="zoneLeadersRows">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <!-- -------------------------------------------------------------------
+           ADMIN VIEW D: GOVERNANCE, LIMITATIONS & METHODOLOGY
+           ------------------------------------------------------------------- -->
+      <section id="sectionAdminLimitations" class="admin-section" style="display: none;">
+        <section class="method-section" id="method">
+          <div class="section-heading">
+            <div>
+              <div class="section-kicker">SCORING ARCHITECTURE</div>
+              <h2>5-Factor Priority Index Methodology</h2>
+              <p class="section-subtitle">Auditable municipal weighting formula balancing incident history, severity, citizen input, and infrastructure context.</p>
+            </div>
+          </div>
+
+          <div class="method-grid">
+            <article class="card method-weights-card">
+              <h3>Factor Weight Distribution</h3>
+              <div class="factor-list">
+                <div class="factor-row">
+                  <span class="factor-name"><i class="factor-dot dot-blue"></i> Incident Volume</span>
+                  <span class="factor-bar"><i style="width:30%"></i></span>
+                  <strong class="factor-weight">30%</strong>
+                  <small class="factor-desc">Historical reports scaled to 95th percentile ceiling</small>
+                </div>
+                <div class="factor-row">
+                  <span class="factor-name"><i class="factor-dot dot-red"></i> Average Incident Severity</span>
+                  <span class="factor-bar"><i style="width:25%"></i></span>
+                  <strong class="factor-weight">25%</strong>
+                  <small class="factor-desc">Low: 1 · Medium: 2 · High: 3 · Critical: 4 (divided by 4.0)</small>
+                </div>
+                <div class="factor-row">
+                  <span class="factor-name"><i class="factor-dot dot-purple"></i> Complaint Volume</span>
+                  <span class="factor-bar"><i style="width:20%"></i></span>
+                  <strong class="factor-weight">20%</strong>
+                  <small class="factor-desc">Public complaints scaled to 95th percentile ceiling</small>
+                </div>
+                <div class="factor-row">
+                  <span class="factor-name"><i class="factor-dot dot-amber"></i> Open Backlog</span>
+                  <span class="factor-bar"><i style="width:15%"></i></span>
+                  <strong class="factor-weight">15%</strong>
+                  <small class="factor-desc">Unresolved incidents + open complaints</small>
+                </div>
+                <div class="factor-row">
+                  <span class="factor-name"><i class="factor-dot dot-green"></i> Street Risk Context</span>
+                  <span class="factor-bar"><i style="width:10%"></i></span>
+                  <strong class="factor-weight">10%</strong>
+                  <small class="factor-desc">Road condition (40%), pedestrian density (30%), school/hospital (20%), density (10%)</small>
+                </div>
+              </div>
+            </article>
+
+            <article class="card method-faq-card">
+              <h3>Auditability & Fairness Disclosures</h3>
+              <div class="faq-item">
+                <strong>Why use a weighted heuristic instead of an end-to-end black-box model?</strong>
+                <p>
+                  Municipal resource allocation demands total auditability, explainability, and legal defensibility. 
+                  Every point awarded corresponds directly to tangible evidence.
+                </p>
+              </div>
+              <div class="faq-item">
+                <strong>How does the 95th percentile normalization prevent outlier distortion?</strong>
+                <p>
+                  Capping values at the 95th percentile prevents single extreme locations from compressing scores across the rest of the city.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="limitations-section" id="limitations">
+          <div class="section-heading">
+            <div>
+              <div class="section-kicker">GOVERNANCE & TRANSPARENCY</div>
+              <h2>Data Integrity & Operational Disclosures</h2>
+              <p class="section-subtitle">Explicit disclosures regarding synthetic data, coordinates, and cleaned turnaround times.</p>
+            </div>
+          </div>
+
+          <div class="limitations-grid">
+            <article class="card lim-card">
+              <span class="lim-icon">📊</span>
+              <strong>Synthetic Educational Dataset</strong>
+              <p>Generated for DATATHON 2026 (1,000 locations, 10,000 incidents, 8,000 complaints). Findings demonstrate analytical capability and do not reflect real-world city infrastructure.</p>
+            </article>
+
+            <article class="card lim-card">
+              <span class="lim-icon">📍</span>
+              <strong>Simulated Geographic Coordinates</strong>
+              <p>All latitude and longitude values are simulated centroids plotted for demonstration. They must never be treated as real road hazard coordinates.</p>
+            </article>
+
+            <article class="card lim-card">
+              <span class="lim-icon">🔀</span>
+              <strong>Complaint & Incident Overlap</strong>
+              <p>Incidents and complaints are recorded independently. The queue explicitly avoids treating co-occurring records as independent physical damages.</p>
+            </article>
+
+            <article class="card lim-card">
+              <span class="lim-icon">🛡️</span>
+              <strong>Turnaround Time Cleaning</strong>
+              <p>2,874 unresolved incidents and 3,438 open complaints with populated placeholder durations were strictly excluded from completed turnaround-time calculations to prevent data contamination.</p>
+            </article>
+          </div>
+        </section>
+      </section>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODALS & DIALOGS
+       ========================================================================= -->
+
+  <!-- 1. CITIZEN AUTHENTICATION MODAL (LOGIN / REGISTER) -->
+  <dialog id="authModal" class="modal-dialog">
+    <div class="modal-card">
+      <div class="modal-header">
         <div>
-          <h2 class="panel-title">Scoring Methodology &amp; Data Integrity Rules</h2>
-          <p class="panel-subtitle">Multi-pillar mathematical formulation and Stage 1 validation constraints.</p>
+          <span class="section-kicker">CITIZEN IDENTITY</span>
+          <h2 id="authModalTitle">Citizen Account Access</h2>
         </div>
+        <button type="button" class="modal-close-btn" id="closeAuthModal" aria-label="Close dialog">×</button>
       </div>
 
-      <div class="methodology-grid">
-        <div class="methodology-card">
-          <div class="pillar-weight-badge">Weight: 35%</div>
-          <h3 class="methodology-h3">1. Incident Hazard</h3>
-          <p class="methodology-desc">
-            <code>4&times;Critical + 3&times;High + 2&times;Medium + 1&times;Low + 2&times;Injuries + 1&times;Count</code>.
-            Evaluates verified physical disruptions, hazard severity, and acute injuries reported by field crews.
-          </p>
-        </div>
-
-        <div class="methodology-card">
-          <div class="pillar-weight-badge">Weight: 25%</div>
-          <h3 class="methodology-h3">2. Backlog Burden</h3>
-          <p class="methodology-desc">
-            <code>2.5&times;Unresolved Incidents + 1.0&times;Open Complaints</code>.
-            Penalizes unaddressed hazards lingering without work-order closure to prioritize stagnant repairs.
-          </p>
-        </div>
-
-        <div class="methodology-card">
-          <div class="pillar-weight-badge">Weight: 25%</div>
-          <h3 class="methodology-h3">3. Vulnerability Context</h3>
-          <p class="methodology-desc">
-            Road Condition (up to 35 pts) + School Proximity (20 pts) + Hospital Proximity (20 pts) + Pedestrians (15 pts) + Density (10 pts). Protects sensitive civilian receptors.
-          </p>
-        </div>
-
-        <div class="methodology-card">
-          <div class="pillar-weight-badge">Weight: 15%</div>
-          <h3 class="methodology-h3">4. Citizen Demand</h3>
-          <p class="methodology-desc">
-            <code>1.0&times;Total Complaints + 2.0&times;High Priority + 0.5&times;Normal Priority</code>.
-            Quantifies community dissatisfaction while remaining strictly distinct from verified physical events.
-          </p>
-        </div>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab-btn active" id="btnTabLogin">Sign In</button>
+        <button type="button" class="auth-tab-btn" id="btnTabRegister">Create Account</button>
       </div>
 
-      <div class="data-quality-banner">
-        <div class="data-quality-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-          Stage 1 Quality Constraints &amp; Integrity Assurances
-        </div>
-        <ul class="data-quality-list">
-          <li><strong>Zero Data Modification:</strong> Source CSVs (<code>locations.csv</code>, <code>incidents.csv</code>, <code>public_complaints.csv</code>) remain untouched and read-only.</li>
-          <li><strong>No Target Leakage:</strong> Synthetically populated resolution hours on unresolved tickets (<code>resolved=0</code>) are strictly excluded from turnaround scoring.</li>
-          <li><strong>Complaints vs. Incidents:</strong> Public complaints represent citizen reporting sentiment and are not conflated with verified physical failures.</li>
-          <li><strong>Advisory Recommendations:</strong> All suggested actions represent algorithmic triage guidance for municipal engineering crews, not confirmed structural diagnoses.</li>
-        </ul>
-      </div>
-    </section>
+      <div class="modal-body">
+        <!-- Sign In Form -->
+        <form id="loginForm" class="auth-form">
+          <label class="field-label">
+            <span>Email Address</span>
+            <input type="email" id="loginEmail" class="input-text" placeholder="you@domain.com" required>
+          </label>
+          <label class="field-label">
+            <span>Password</span>
+            <input type="password" id="loginPassword" class="input-text" placeholder="••••••••" required>
+          </label>
+          <div class="form-actions-row">
+            <button type="submit" class="button button-primary button-block" id="btnLoginSubmit">Sign In to Citidy</button>
+          </div>
+          <div class="demo-login-box">
+            <span>For judges & evaluation:</span>
+            <button type="button" class="button button-sm button-secondary button-block" id="btnFillDemoCitizen">
+              Log in as Demo Citizen (1-Click)
+            </button>
+          </div>
+        </form>
 
-    <!-- Footer -->
-    <footer class="app-footer">
+        <!-- Register Form -->
+        <form id="registerForm" class="auth-form" style="display: none;">
+          <label class="field-label">
+            <span>Full Name</span>
+            <input type="text" id="regFullName" class="input-text" placeholder="Maria Santos" required>
+          </label>
+          <label class="field-label">
+            <span>Email Address</span>
+            <input type="email" id="regEmail" class="input-text" placeholder="maria@example.com" required>
+          </label>
+          <label class="field-label">
+            <span>Phone (Optional)</span>
+            <input type="tel" id="regPhone" class="input-text" placeholder="+1-555-0199">
+          </label>
+          <label class="field-label">
+            <span>Password (min 8 chars)</span>
+            <input type="password" id="regPassword" class="input-text" placeholder="••••••••" required minlength="8">
+          </label>
+          <div class="form-actions-row">
+            <button type="submit" class="button button-primary button-block" id="btnRegisterSubmit">Create Citizen Account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 2. IN-APP NOTIFICATION CENTER MODAL -->
+  <dialog id="notifModal" class="modal-dialog">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="section-kicker">IN-APP NOTIFICATIONS</span>
+          <h2>Civic Status Updates</h2>
+        </div>
+        <div class="modal-actions-right">
+          <button type="button" class="button button-xs button-secondary" id="btnMarkAllNotifsRead">Mark All as Read</button>
+          <button type="button" class="modal-close-btn" id="closeNotifModal" aria-label="Close dialog">×</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="notif-list" id="notifListContainer">
+          <!-- Dynamically populated notifications -->
+          <div class="empty-state">No notifications yet.</div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 3. COMPLAINT TIMELINE & BEFORE/AFTER EVIDENCE MODAL -->
+  <dialog id="evidenceModal" class="modal-dialog modal-lg">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="section-kicker">VERIFIED CIVIC EVIDENCE</span>
+          <h2 id="evidenceModalTitle">Complaint CTD-2026-00000</h2>
+        </div>
+        <button type="button" class="modal-close-btn" id="closeEvidenceModal" aria-label="Close dialog">×</button>
+      </div>
+      <div class="modal-body" id="evidenceModalBody">
+        <!-- Injected via app.js: side-by-side Before/After comparison, milestones, estimate history -->
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 4. ADMIN ASSIGN DEPARTMENT MODAL -->
+  <dialog id="assignModal" class="modal-dialog">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="section-kicker">STAFF DISPATCH</span>
+          <h2>Assign Complaint to Department</h2>
+        </div>
+        <button type="button" class="modal-close-btn" id="closeAssignModal" aria-label="Close dialog">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="assignForm">
+          <input type="hidden" id="assignComplaintId">
+          <label class="field-label">
+            <span>Department</span>
+            <select id="assignDepartment" class="input-select" required>
+              <option value="Roads & Bridges Department">Roads & Bridges Department</option>
+              <option value="Sanitation & Waste Management">Sanitation & Waste Management</option>
+              <option value="Street Lighting & Electrical">Street Lighting & Electrical</option>
+              <option value="Drainage & Flood Control">Drainage & Flood Control</option>
+              <option value="Water Works & Utilities">Water Works & Utilities</option>
+              <option value="Public Parks & Infrastructure">Public Parks & Infrastructure</option>
+            </select>
+          </label>
+          <label class="field-label">
+            <span>Responsible Worker / Crew Lead</span>
+            <input type="text" id="assignWorker" class="input-text" placeholder="e.g. Officer Marcus Vance" required>
+          </label>
+          <div class="form-actions-row">
+            <button type="submit" class="button button-primary button-block">Assign & Update Status</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 5. ADMIN ADJUST ESTIMATED RESOLUTION DATE MODAL (WITH MANDATORY REASON) -->
+  <dialog id="estimateModal" class="modal-dialog">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="section-kicker">SLA TARGET MANAGEMENT</span>
+          <h2>Adjust Estimated Resolution Date</h2>
+        </div>
+        <button type="button" class="modal-close-btn" id="closeEstimateModal" aria-label="Close dialog">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="estimateForm">
+          <input type="hidden" id="estimateComplaintId">
+          <p class="estimate-dialog-intro">
+            Any modification to an estimated target date is recorded in the permanent audit trail and immediately notifies the reporting citizen with the documented reason.
+          </p>
+          <label class="field-label">
+            <span>New Target Resolution Date <span class="required">*</span></span>
+            <input type="date" id="estimateNewDate" class="input-text" required>
+          </label>
+          <label class="field-label">
+            <span>Mandatory Reason for Revision <span class="required">*</span></span>
+            <textarea id="estimateReason" class="input-textarea" rows="3" placeholder="e.g. Inclement weather delayed asphalt curing; specialized vacuum truck dispatched." required></textarea>
+          </label>
+          <div class="form-actions-row">
+            <button type="submit" class="button button-primary button-block">Save Revised Target & Notify Citizen</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 6. ADMIN MANDATORY RESOLUTION MODAL (AFTER PHOTO REQUIRED!) -->
+  <dialog id="resolveModal" class="modal-dialog">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="section-kicker">VERIFIED PROOF OF WORK</span>
+          <h2>Mark Complaint as Resolved</h2>
+        </div>
+        <button type="button" class="modal-close-btn" id="closeResolveModal" aria-label="Close dialog">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="resolveForm">
+          <input type="hidden" id="resolveComplaintId">
+          <div class="mandatory-notice">
+            <span class="notice-icon">⚠️</span>
+            <p><strong>Strict Verification Requirement:</strong> You cannot mark a complaint as Resolved without uploading the final resolution photograph showing the completed repair and entering detailed resolution notes.</p>
+          </div>
+
+          <!-- Mandatory Final After Photo Upload -->
+          <div class="form-group">
+            <label class="form-label" for="resolvePhotoInput">
+              <strong>1. Final Resolution Photograph (Mandatory) <span class="required">*</span></strong>
+              <small>Upload clear photographic proof of the completed fix</small>
+            </label>
+            <div class="photo-upload-dropzone" id="resolvePhotoDropzone">
+              <div class="dropzone-prompt" id="resolveDropzonePrompt">
+                <span class="dropzone-icon">📸</span>
+                <strong>Select verified fix photo, or <span class="browse-link">browse file</span></strong>
+                <small>JPG, PNG, WEBP (Max 15MB)</small>
+              </div>
+              <div class="dropzone-preview" id="resolveDropzonePreview" style="display: none;">
+                <img id="resolvePreviewImg" alt="Resolution preview">
+                <div class="preview-meta">
+                  <span id="resolvePreviewName">fixed.jpg</span>
+                  <button type="button" class="button-remove-photo" id="btnRemoveResolvePhoto">×</button>
+                </div>
+              </div>
+              <input type="file" id="resolvePhotoInput" accept="image/*" class="sr-only" required>
+            </div>
+          </div>
+
+          <!-- Mandatory Resolution Notes -->
+          <div class="form-group">
+            <label class="form-label" for="resolveNotes">
+              <strong>2. Work Performed & Notes (Mandatory) <span class="required">*</span></strong>
+              <small>Describe the physical repair, materials used, or crew verification</small>
+            </label>
+            <textarea id="resolveNotes" class="input-textarea" rows="3" placeholder="e.g. Pothole filled with hot-mix asphalt and compacted with roller; road surface restored." required></textarea>
+          </div>
+
+          <div class="form-actions-row">
+            <button type="submit" class="button button-success button-block" id="btnSubmitResolve">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.7 5.3 7.5 14.5l-4.2-4.2" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Verify Fix & Mark Resolved (100%)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 7. CITIZEN REOPEN / DISPUTE RESOLUTION MODAL -->
+  <dialog id="reopenModal" class="modal-dialog">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="section-kicker">DISPUTE RESOLUTION</span>
+          <h2>Dispute Resolution & Reopen Complaint</h2>
+        </div>
+        <button type="button" class="modal-close-btn" id="closeReopenModal" aria-label="Close dialog">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="reopenForm">
+          <input type="hidden" id="reopenComplaintId">
+          <p class="reopen-dialog-intro">
+            If the problem was not satisfactorily resolved or if the issue has recurred, submit a dispute explanation. The complaint will be returned to <strong>Reopened</strong> status for municipal re-inspection.
+          </p>
+          <label class="field-label">
+            <span>Reason for Dispute <span class="required">*</span></span>
+            <textarea id="reopenReason" class="input-textarea" rows="4" placeholder="Explain why the resolution is incomplete or unsatisfactory…" required></textarea>
+          </label>
+          <div class="form-actions-row">
+            <button type="submit" class="button button-danger button-block">Submit Dispute & Reopen Issue</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 8. SCORING METHOD DIALOG (PRESERVED) -->
+  <dialog id="methodDialog" class="method-dialog">
+    <div class="dialog-header">
       <div>
-        <strong>CityFix AI</strong> &bull; Datathon 2026 &mdash; Track 3: Smart City
+        <div class="section-kicker">MUNICIPAL GOVERNANCE</div>
+        <h2>Scoring Methodology</h2>
       </div>
-      <div class="footer-synthetic">
-        Synthetic educational dataset &bull; Coordinates simulated &bull; Not for real public safety dispatch
+      <button class="dialog-close" id="closeMethodDialog" aria-label="Close dialog">×</button>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-intro">
+        The Citidy review index is an auditable, weighted heuristic that translates operational signals into a reproducible 0–100 review priority score.
+      </p>
+      <div class="dialog-weights">
+        <div><b>30%</b><span>Incident Volume<br><small>Historical incident reports normalized against 95th percentile</small></span></div>
+        <div><b>25%</b><span>Average Incident Severity<br><small>Low: 1 · Medium: 2 · High: 3 · Critical: 4 (normalized / 4.0)</small></span></div>
+        <div><b>20%</b><span>Complaint Volume<br><small>Public citizen reports normalized against 95th percentile</small></span></div>
+        <div><b>15%</b><span>Open Backlog<br><small>Unresolved incidents + active unassigned/assigned complaints</small></span></div>
+        <div><b>10%</b><span>Street Risk Context<br><small>Road condition (40%), pedestrian traffic (30%), school/hospital (20%), density (10%</small></span></div>
       </div>
-    </footer>
+      <div class="dialog-note">
+        <strong>Experimental ML Regressor:</strong> A 36-tree Random Forest predicts Q4 incident counts. Due to Poisson distribution in synthetic data, it achieves parity with the mean baseline. The Priority Index remains the primary transparent operational heuristic.
+      </div>
+    </div>
+  </dialog>
 
-  </main>
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js"></script>
+  <!-- SCRIPTS -->
+  <script src="google-maps-config.js?v=1"></script>
+  <script src="data.js?v=citidy-2026-v3"></script>
+  <script src="app.js?v=citidy-2026-v3"></script>
 </body>
 </html>
